@@ -130,7 +130,7 @@
 				</span>
 				<div class="formhelp"><fmt:message key="${preference.value.help}" /></div>
 				<c:if test="${!empty preference.value.preview}">
-					<div class"row">
+					<div class="row">
 						<label><fmt:message key="common.current"><fmt:param><fmt:message key="${preference.value.label}" /></fmt:param></fmt:message></label>
 						<span><c:out value="${preference.value.preview}" escapeXml="false" /></span>
 					</div>
