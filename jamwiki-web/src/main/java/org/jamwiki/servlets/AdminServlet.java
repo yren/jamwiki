@@ -486,7 +486,7 @@ public class AdminServlet extends JAMWikiServlet {
 		String value = request.getParameter(parameter);
 		if (!StringUtils.equalsIgnoreCase(value, "SHORT") && !StringUtils.equalsIgnoreCase(value, "MEDIUM") && !StringUtils.equalsIgnoreCase(value, "LONG") && !StringUtils.equalsIgnoreCase(value, "FULL")) {
 			try {
-				SimpleDateFormat sdf = new SimpleDateFormat(value);
+				new SimpleDateFormat(value);
 			} catch (Exception e) {
 				errors.add(new WikiMessage("admin.message.date.error", parameter, value));
 			}
