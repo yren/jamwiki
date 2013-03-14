@@ -68,7 +68,7 @@ public class GroupMap implements Serializable {
 	 * @param groupId The id of the group
 	 */
 	public GroupMap(int groupId) {
-		this.groupMapType = this.GROUP_MAP_GROUP;
+		this.groupMapType = GroupMap.GROUP_MAP_GROUP;
 		this.groupId = groupId;
 		this.groupMembers = new ArrayList<String>();
 	}
@@ -78,7 +78,7 @@ public class GroupMap implements Serializable {
 	 * @param userLogin The login String of the user
 	 */
 	public GroupMap(String userLogin) {
-		this.groupMapType = this.GROUP_MAP_USER;
+		this.groupMapType = GroupMap.GROUP_MAP_USER;
 		this.userLogin = userLogin;
 		this.groupIds = new ArrayList<Integer>();
 	}

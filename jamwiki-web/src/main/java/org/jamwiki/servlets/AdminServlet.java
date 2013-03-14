@@ -387,7 +387,7 @@ public class AdminServlet extends JAMWikiServlet {
 			setProperty(props, request, Environment.PROP_RSS_TITLE);
 			pageInfo.getErrors().addAll(WikiUtil.validateSystemSettings(props));
 			if (pageInfo.getErrors().isEmpty()) {
-				this.saveUserPreferenceDefaults(request, pageInfo);
+				AdminServlet.saveUserPreferenceDefaults(request, pageInfo);
 			}
 			if (this.saveProperties(request, next, pageInfo, props)) {
 				pageInfo.addMessage(new WikiMessage("admin.message.changessaved"));
