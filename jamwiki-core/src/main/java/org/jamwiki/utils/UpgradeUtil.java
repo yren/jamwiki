@@ -29,10 +29,7 @@ import org.jamwiki.WikiMessage;
 import org.jamwiki.WikiVersion;
 import org.jamwiki.db.DatabaseUpgrades;
 import org.jamwiki.db.WikiDatabase;
-import org.jamwiki.model.Topic;
-import org.jamwiki.model.TopicVersion;
 import org.jamwiki.model.VirtualWiki;
-import org.jamwiki.model.WikiUser;
 import org.jamwiki.utils.WikiCache;
 import org.jamwiki.utils.WikiLogger;
 
