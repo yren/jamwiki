@@ -18,9 +18,9 @@
 		<module>jamwiki-war</module>
 	</modules>
 	<scm>
-		<connection>scm:git:git://jamwiki.git.sourceforge.net/gitroot/jamwiki/jamwiki</connection>
-		<developerConnection>scm:git:ssh://jamwiki.git.sourceforge.net/gitroot/jamwiki/jamwiki</developerConnection>
-		<url>http://jamwiki.git.sourceforge.net/git/gitweb.cgi?p=jamwiki/jamwiki</url>
+		<connection>scm:git:git://git.code.sf.net/p/jamwiki/code</connection>
+		<developerConnection>scm:git:ssh://git.code.sf.net/p/jamwiki/code</developerConnection>
+		<url>http://sourceforge.net/p/jamwiki/code/</url>
 	</scm>
 	<issueManagement>
 		<system>JIRA</system>
