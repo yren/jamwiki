@@ -16,8 +16,6 @@
  */
 package org.jamwiki.servlets;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -40,6 +38,8 @@ import org.jamwiki.utils.WikiUtil;
 import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
+
+import static org.jamwiki.utils.Utilities.urlEncodeUtf8;
 
 /**
  * Provides an RSS or Atom feed for recent changes.
@@ -205,12 +205,8 @@ public class RecentChangesFeedServlet extends AbstractController {
 			descr.append(" (deleted)");
 		} else {
 			if (linkToVersion) {
-				try {
-					String url = feedURL + URLEncoder.encode("Special:History?topicVersionId=" + change.getTopicVersionId() + "&topic=" + Utilities.encodeAndEscapeTopicName(change.getTopicName()), "UTF-8");
-					entry.setLink(url);
-				} catch (UnsupportedEncodingException e) {
-					// this won't ever happen since UTF-8 is always valid
-				}
+				String url = feedURL + urlEncodeUtf8("Special:History?topicVersionId=" + change.getTopicVersionId() + "&topic=" + Utilities.encodeAndEscapeTopicName(change.getTopicName()));
+				entry.setLink(url);
 			} else {
 				entry.setLink(feedURL + Utilities.encodeAndEscapeTopicName(change.getTopicName()));
 			}
