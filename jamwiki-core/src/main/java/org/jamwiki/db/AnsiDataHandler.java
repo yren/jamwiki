@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -336,16 +337,12 @@ public class AnsiDataHandler {
 		if (StringUtils.isBlank(password)) {
 			return false;
 		}
-		Connection conn = null;
 		try {
-			conn = DatabaseConnection.getConnection();
 			// password is stored encrypted, so encrypt password
 			String encryptedPassword = Encryption.encrypt(password);
-			return this.queryHandler().authenticateUser(username, encryptedPassword, conn);
+			return this.queryHandler().authenticateUser(username, encryptedPassword);
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
-		} finally {
-			DatabaseConnection.closeConnection(conn);
 		}
 	}
 
@@ -996,14 +993,10 @@ public class AnsiDataHandler {
 			return virtualWikis;
 		}
 		virtualWikis = new ArrayList<VirtualWiki>();
-		Connection conn = null;
 		try {
-			conn = DatabaseConnection.getConnection();
-			virtualWikis = this.queryHandler().getVirtualWikis(conn);
+			virtualWikis = this.queryHandler().getVirtualWikis();
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
-		} finally {
-			DatabaseConnection.closeConnection(conn);
 		}
 		CACHE_VIRTUAL_WIKI_LIST.addToCache(CACHE_VIRTUAL_WIKI_LIST.getCacheName(), virtualWikis);
 		return virtualWikis;
@@ -1124,14 +1117,13 @@ public class AnsiDataHandler {
 			return interwikis;
 		}
 		// if not in the cache, go to the database
-		Connection conn = null;
 		try {
-			conn = DatabaseConnection.getConnection();
-			interwikis = this.queryHandler().lookupInterwikis(conn);
+			interwikis = this.queryHandler().lookupInterwikis();
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
-		} finally {
-			DatabaseConnection.closeConnection(conn);
+		}
+		if (interwikis != null) {
+			Collections.sort(interwikis);
 		}
 		CACHE_INTERWIKI_LIST.addToCache(CACHE_INTERWIKI_LIST.getCacheName(), interwikis);
 		return interwikis;

@@ -76,13 +76,11 @@ public interface QueryHandler {
 	 * @param login The login of the user record being retrieved.
 	 * @param encryptedPassword The encrypted password for the user record being
 	 *  retrieved.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @return <code>true</code> if the login and password matches an existing
 	 *  user, <code>false</code> otherwise.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	boolean authenticateUser(String login, String encryptedPassword, Connection conn) throws SQLException;
+	boolean authenticateUser(String login, String encryptedPassword) throws SQLException;
 
 	/**
 	 * Some databases support automatically incrementing primary key values without the
@@ -492,13 +490,11 @@ public interface QueryHandler {
 	/**
 	 * Retrieve a list of all virtual wiki information for all virtual wikis.
 	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @return Returns a list of VirtualWiki objects for every virtual wiki or an
 	 *  empty list if no virtual wikis are found.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	List<VirtualWiki> getVirtualWikis(Connection conn) throws SQLException;
+	List<VirtualWiki> getVirtualWikis() throws SQLException;
 
 	/**
 	 * Retrieve a list of topic names for topics in the user's watchlist.
@@ -791,12 +787,10 @@ public interface QueryHandler {
 	/**
 	 * Return all interwiki records currently available for the wiki.
 	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @return A list of all Interwiki records currently available for the wiki.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	List<Interwiki> lookupInterwikis(Connection conn) throws SQLException;
+	List<Interwiki> lookupInterwikis() throws SQLException;
 
 	/**
 	 * Retrieve a list of all current namespace objects.

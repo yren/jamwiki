@@ -26,7 +26,7 @@ import org.jamwiki.utils.Utilities;
 /**
  * Provides an object representing an interwiki link record.
  */
-public class Interwiki implements Serializable {
+public class Interwiki implements Comparable<Interwiki>, Serializable {
 
 	private final String interwikiDisplay;
 	private final String interwikiPattern;
@@ -40,6 +40,21 @@ public class Interwiki implements Serializable {
 		this.interwikiPrefix = interwikiPrefix;
 		this.interwikiPattern = interwikiPattern;
 		this.interwikiDisplay = interwikiDisplay;
+	}
+
+	/**
+	 * Compare two Interwiki objects for sorting purposes.
+	 */
+	public int compareTo(Interwiki o) {
+		if (this.interwikiPrefix == null && o.interwikiPrefix != null) {
+			return 1;
+		} else if (this.interwikiPrefix == null && o.interwikiPrefix == null) {
+			return 0;
+		} else if (this.interwikiPrefix != null && o.interwikiPrefix == null) {
+			return 1;
+		} else {
+			return this.interwikiPrefix.compareTo(o.interwikiPrefix);
+		}
 	}
 
 	/**

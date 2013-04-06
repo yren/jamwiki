@@ -23,8 +23,8 @@ import java.io.Serializable;
  */
 public class ImageData implements Serializable {
 
-	public int fileVersionId;
-	public String mimeType;
+	public int fileVersionId = -1;
+	public final String mimeType;
 	public int width;
 	public int height;
 	public byte data[];
@@ -32,18 +32,10 @@ public class ImageData implements Serializable {
 	/**
 	 *
 	 */
-	public ImageData(int fileVersionId, String mimeType, int width, int height, byte data[]) {
-		this.fileVersionId = fileVersionId;
+	public ImageData(String mimeType, int width, int height, byte data[]) {
 		this.mimeType      = mimeType;
 		this.width         = width;
 		this.height        = height;
 		this.data          = data;
-	}
-
-	/**
-	 *
-	 */
-	public ImageData(String mimeType, int width, int height, byte data[]) {
-		this(-1, mimeType, width, height, data);
 	}
 }

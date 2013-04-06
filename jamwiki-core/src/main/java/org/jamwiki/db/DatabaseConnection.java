@@ -34,6 +34,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
@@ -48,6 +49,7 @@ public class DatabaseConnection {
 
 	private static final WikiLogger logger = WikiLogger.getLogger(DatabaseConnection.class.getName());
 	private static DataSource dataSource = null;
+	private static JdbcTemplate jdbcTemplate = null;
 	private static DataSourceTransactionManager transactionManager = null;
 
 	/**
@@ -255,6 +257,20 @@ public class DatabaseConnection {
 		}
 		dataSource = new LazyConnectionDataSourceProxy(targetDataSource);
 		transactionManager = new DataSourceTransactionManager(targetDataSource);
+	}
+
+	/**
+	 * Return a Spring JdbcTemplate suitable for querying the database.
+	 */
+	protected static JdbcTemplate getJdbcTemplate() throws SQLException {
+		if (jdbcTemplate == null) {
+			if (dataSource == null) {
+				// DataSource has not yet been created, obtain it now
+				configDataSource();
+			}
+			jdbcTemplate = new JdbcTemplate(dataSource);
+		}
+		return jdbcTemplate;
 	}
 
 	/**

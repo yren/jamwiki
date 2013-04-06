@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Properties;
-
-// import org.apache.commons.lang.ObjectUtils.Null;
 import org.apache.commons.lang3.StringUtils;
 import org.jamwiki.Environment;
 import org.jamwiki.model.Category;
@@ -56,6 +54,8 @@ import org.jamwiki.model.WikiUser;
 import org.jamwiki.model.WikiUserDetails;
 import org.jamwiki.utils.Pagination;
 import org.jamwiki.utils.WikiLogger;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Default implementation of the QueryHandler implementation for retrieving, inserting,
@@ -288,15 +288,14 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public boolean authenticateUser(String username, String encryptedPassword, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
+	public boolean authenticateUser(String username, String encryptedPassword) throws SQLException {
+		Object[] args = { username, encryptedPassword };
 		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_USERS_AUTHENTICATION);
-			stmt.setString(1, username);
-			stmt.setString(2, encryptedPassword);
-			return (stmt.executeQuery().next());
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_USERS_AUTHENTICATION, args, String.class);
+			return true;
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// invalid username / password
+			return false;
 		}
 	}
 
@@ -667,23 +666,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<WikiFileVersion> getAllWikiFileVersions(WikiFile wikiFile, boolean descending) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_FILE_VERSIONS);
-			// FIXME - sort order ignored
-			stmt.setInt(1, wikiFile.getFileId());
-			rs = stmt.executeQuery();
-			List<WikiFileVersion> fileVersions = new ArrayList<WikiFileVersion>();
-			while (rs.next()) {
-				fileVersions.add(this.initWikiFileVersion(rs));
-			}
-			return fileVersions;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		// FIXME - sort order ignored
+		Object[] args = { wikiFile.getFileId() };
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_WIKI_FILE_VERSIONS, args, new WikiFileVersionMapper());
 	}
 
 	/**
@@ -888,22 +873,8 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<Role> getRoleMapGroup(String groupName) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUP_AUTHORITIES);
-			stmt.setString(1, groupName);
-			rs = stmt.executeQuery();
-			List<Role> roles = new ArrayList<Role>();
-			while (rs.next()) {
-				roles.add(this.initRole(rs));
-			}
-			return roles;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = { groupName };
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_GROUP_AUTHORITIES, args, new RoleMapper());
 	}
 
 	/**
@@ -940,65 +911,22 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<Role> getRoleMapUser(String login) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_AUTHORITIES_USER);
-			stmt.setString(1, login);
-			stmt.setString(2, login);
-			rs = stmt.executeQuery();
-			List<Role> roles = new ArrayList<Role>();
-			while (rs.next()) {
-				roles.add(this.initRole(rs));
-			}
-			return roles;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = { login, login };
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_AUTHORITIES_USER, args, new RoleMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<Role> getRoles() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_ROLES);
-			rs = stmt.executeQuery();
-			List<Role> roles = new ArrayList<Role>();
-			while (rs.next()) {
-				roles.add(this.initRole(rs));
-			}
-			return roles;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_ROLES, new RoleMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<WikiGroup> getGroups() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUPS);
-			rs = stmt.executeQuery();
-			List<WikiGroup> groups = new ArrayList<WikiGroup>();
-			while (rs.next()) {
-				groups.add(this.initWikiGroup(rs));
-			}
-			return groups;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_GROUPS, new WikiGroupMapper());
 	}
 	
 	/**
@@ -1202,50 +1130,16 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<VirtualWiki> getVirtualWikis(Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_VIRTUAL_WIKIS);
-			rs = stmt.executeQuery();
-			List<VirtualWiki> results = new ArrayList<VirtualWiki>();
-			while (rs.next()) {
-				VirtualWiki virtualWiki = new VirtualWiki(rs.getString("virtual_wiki_name"));
-				virtualWiki.setVirtualWikiId(rs.getInt("virtual_wiki_id"));
-				virtualWiki.setRootTopicName(rs.getString("default_topic_name"));
-				virtualWiki.setLogoImageUrl(rs.getString("logo_image_url"));
-				virtualWiki.setMetaDescription(rs.getString("meta_description"));
-				virtualWiki.setSiteName(rs.getString("site_name"));
-				results.add(virtualWiki);
-			}
-			return results;
-		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
-		}
+	public List<VirtualWiki> getVirtualWikis() throws SQLException {
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_VIRTUAL_WIKIS, new VirtualWikiMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<String> getWatchlist(int virtualWikiId, int userId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WATCHLIST);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, userId);
-			rs = stmt.executeQuery();
-			List<String> watchedTopicNames = new ArrayList<String>();
-			while (rs.next()) {
-				watchedTopicNames.add(rs.getString("topic_name"));
-			}
-			return watchedTopicNames;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = { virtualWikiId, userId };
+		return DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_WATCHLIST, args, String.class);
 	}
 
 	/**
@@ -1499,19 +1393,6 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	private Category initCategory(ResultSet rs, String virtualWikiName) throws SQLException {
-		Category category = new Category();
-		category.setName("category_name");
-		category.setVirtualWiki(virtualWikiName);
-		category.setChildTopicName(rs.getString("topic_name"));
-		category.setSortKey(rs.getString("sort_key"));
-		category.setTopicType(TopicType.findTopicType(rs.getInt("topic_type")));
-		return category;
-	}
-
-	/**
-	 *
-	 */
 	public LogItem initLogItem(ResultSet rs, String virtualWikiName) throws SQLException {
 		LogItem logItem = new LogItem();
 		int userId = rs.getInt("wiki_user_id");
@@ -1576,15 +1457,6 @@ public class AnsiQueryHandler implements QueryHandler {
 		}
 		change.setVirtualWiki(rs.getString("virtual_wiki_name"));
 		return change;
-	}
-
-	/**
-	 *
-	 */
-	private Role initRole(ResultSet rs) throws SQLException {
-		Role role = new Role(rs.getString("role_name"));
-		role.setDescription(rs.getString("role_description"));
-		return role;
 	}
 
 	/**
@@ -1673,54 +1545,6 @@ public class AnsiQueryHandler implements QueryHandler {
 			userBlock.setUnblockedByUserId(unblockedByUserId);
 		}
 		return userBlock;
-	}
-
-	/**
-	 *
-	 */
-	private WikiFile initWikiFile(ResultSet rs, String virtualWikiName) throws SQLException {
-		WikiFile wikiFile = new WikiFile();
-		wikiFile.setFileId(rs.getInt("file_id"));
-		wikiFile.setAdminOnly(rs.getInt("file_admin_only") != 0);
-		wikiFile.setFileName(rs.getString("file_name"));
-		wikiFile.setVirtualWiki(virtualWikiName);
-		wikiFile.setUrl(rs.getString("file_url"));
-		wikiFile.setTopicId(rs.getInt("topic_id"));
-		wikiFile.setReadOnly(rs.getInt("file_read_only") != 0);
-		wikiFile.setDeleteDate(rs.getTimestamp("delete_date"));
-		wikiFile.setMimeType(rs.getString("mime_type"));
-		wikiFile.setFileSize(rs.getInt("file_size"));
-		return wikiFile;
-	}
-
-	/**
-	 *
-	 */
-	private WikiFileVersion initWikiFileVersion(ResultSet rs) throws SQLException {
-		WikiFileVersion wikiFileVersion = new WikiFileVersion();
-		wikiFileVersion.setFileVersionId(rs.getInt("file_version_id"));
-		wikiFileVersion.setFileId(rs.getInt("file_id"));
-		wikiFileVersion.setUploadComment(rs.getString("upload_comment"));
-		wikiFileVersion.setUrl(rs.getString("file_url"));
-		int userId = rs.getInt("wiki_user_id");
-		if (userId > 0) {
-			wikiFileVersion.setAuthorId(userId);
-		}
-		wikiFileVersion.setUploadDate(rs.getTimestamp("upload_date"));
-		wikiFileVersion.setMimeType(rs.getString("mime_type"));
-		wikiFileVersion.setAuthorDisplay(rs.getString("wiki_user_display"));
-		wikiFileVersion.setFileSize(rs.getInt("file_size"));
-		return wikiFileVersion;
-	}
-
-	/**
-	 *
-	 */
-	private WikiGroup initWikiGroup(ResultSet rs) throws SQLException {
-		WikiGroup wikiGroup = new WikiGroup(rs.getString("group_name"));
-		wikiGroup.setGroupId(rs.getInt("group_id"));
-		wikiGroup.setDescription(rs.getString("group_description"));
-		return wikiGroup;
 	}
 
 	/**
@@ -2375,25 +2199,10 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<Category> lookupCategoryTopics(int virtualWikiId, String virtualWikiName, String categoryName) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_CATEGORY_TOPICS);
-			// category name must be lowercase since search is case-insensitive
-			categoryName = categoryName.toLowerCase();
-			stmt.setInt(1, virtualWikiId);
-			stmt.setString(2, categoryName);
-			rs = stmt.executeQuery();
-			List<Category> results = new ArrayList<Category>();
-			while (rs.next()) {
-				results.add(this.initCategory(rs, virtualWikiName));
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		// category name must be lowercase since search is case-insensitive
+		categoryName = categoryName.toLowerCase();
+		Object[] args = { virtualWikiId, categoryName };
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_CATEGORY_TOPICS, args, new CategoryMapper(virtualWikiName));
 	}
 
 	/**
@@ -2423,28 +2232,8 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Interwiki> lookupInterwikis(Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		Map<String, Interwiki> interwikis = new TreeMap<String, Interwiki>();
-		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_INTERWIKIS);
-			rs = stmt.executeQuery();
-			String interwikiPrefix, interwikiPattern, interwikiDisplay;
-			int interwikiType;
-			while (rs.next()) {
-				interwikiPrefix = rs.getString("interwiki_prefix");
-				interwikiPattern = rs.getString("interwiki_pattern");
-				interwikiDisplay = rs.getString("interwiki_display");
-				interwikiType = rs.getInt("interwiki_type");
-				Interwiki interwiki = new Interwiki(interwikiPrefix, interwikiPattern, interwikiDisplay);
-				interwiki.setInterwikiType(interwikiType);
-				interwikis.put(interwikiPrefix, interwiki);
-			}
-		} finally {
-			DatabaseConnection.closeConnection(null, stmt, rs);
-		}
-		return new ArrayList<Interwiki>(interwikis.values());
+	public List<Interwiki> lookupInterwikis() throws SQLException {
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_INTERWIKIS, new InterwikiMapper());
 	}
 
 	/**
@@ -2602,20 +2391,11 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public int lookupTopicCount(int virtualWikiId, int namespaceStart, int namespaceEnd) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { virtualWikiId, namespaceStart, namespaceEnd, TopicType.REDIRECT.id() };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_COUNT);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, namespaceStart);
-			stmt.setInt(3, namespaceEnd);
-			stmt.setInt(4, TopicType.REDIRECT.id());
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getInt("topic_count") : 0;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_COUNT, args, Integer.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			return 0;
 		}
 	}
 
@@ -2627,32 +2407,22 @@ public class AnsiQueryHandler implements QueryHandler {
 			// invalid namespace
 			return null;
 		}
-		Connection conn = null;
-		PreparedStatement stmt1 = null;
-		PreparedStatement stmt2 = null;
-		ResultSet rs = null;
 		String topicName = null;
+		Object[] args = { pageName, virtualWikiId, namespace.getId() };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt1 = conn.prepareStatement(STATEMENT_SELECT_TOPIC_NAME);
-			stmt1.setString(1, pageName);
-			stmt1.setInt(2, virtualWikiId);
-			stmt1.setInt(3, namespace.getId());
-			rs = stmt1.executeQuery();
-			topicName = (rs.next() ? rs.getString("topic_name") : null);
-			if (topicName == null && !namespace.isCaseSensitive() && !pageName.toLowerCase().equals(pageName)) {
-				stmt2 = conn.prepareStatement(STATEMENT_SELECT_TOPIC_NAME_LOWER);
-				stmt2.setString(1, pageName.toLowerCase());
-				stmt2.setInt(2, virtualWikiId);
-				stmt2.setInt(3, namespace.getId());
-				rs = stmt2.executeQuery();
-				topicName = (rs.next() ? rs.getString("topic_name") : null);
-			}
-			return topicName;
-		} finally {
-			DatabaseConnection.closeStatement(stmt1);
-			DatabaseConnection.closeConnection(conn, stmt2, rs);
+			topicName = DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_NAME, args, String.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
 		}
+		if (topicName == null && !namespace.isCaseSensitive() && !pageName.toLowerCase().equals(pageName)) {
+			args[0] = pageName.toLowerCase();
+			try {
+				topicName = DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_NAME_LOWER, args, String.class);
+			} catch (IncorrectResultSizeDataAccessException e) {
+				// no matching result
+			}
+		}
+		return topicName;
 	}
 
 	/**
@@ -2688,24 +2458,8 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<String> lookupTopicLinkOrphans(int virtualWikiId, int namespaceId) throws SQLException{
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_LINK_ORPHANS);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, namespaceId);
-			stmt.setInt(3, TopicType.REDIRECT.id());
-			rs = stmt.executeQuery();
-			List<String> results = new ArrayList<String>();
-			while (rs.next()) {
-				results.add(rs.getString("topic_name"));
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = { virtualWikiId, namespaceId, TopicType.REDIRECT.id() };
+		return DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_TOPIC_LINK_ORPHANS, args, String.class);
 	}
 
 	/**
@@ -2766,17 +2520,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public Integer lookupTopicVersionNextId(int topicVersionId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { topicVersionId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_VERSION_NEXT_ID);
-			stmt.setInt(1, topicVersionId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getInt("topic_version_id") : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_VERSION_NEXT_ID, args, Integer.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -2804,18 +2553,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public WikiFile lookupWikiFile(int virtualWikiId, String virtualWikiName, int topicId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { virtualWikiId, topicId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_FILE);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, topicId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initWikiFile(rs, virtualWikiName) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_FILE, args, new WikiFileMapper(virtualWikiName));
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -2827,17 +2570,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *  being retrieved.
 	 */
 	public int lookupWikiFileCount(int virtualWikiId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { virtualWikiId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_FILE_COUNT);
-			stmt.setInt(1, virtualWikiId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getInt("file_count") : 0;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_FILE_COUNT, args, Integer.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return 0;
 		}
 	}
 
@@ -2848,78 +2586,37 @@ public class AnsiQueryHandler implements QueryHandler {
 		if (lookupWikiGroupById(groupId) == null) {
 			return null;
 		}
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
 		GroupMap groupMap = new GroupMap(groupId);
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUP_MAP_GROUP);
-			stmt.setInt(1, groupId);
-			rs = stmt.executeQuery();
-			groupMap = new GroupMap(groupId);
-			List<String> userLogins = new ArrayList<String>();
-			while (rs.next()) {
-				userLogins.add(rs.getString("username"));
-			}
-			groupMap.setGroupMembers(userLogins);
-			return groupMap;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt,rs);
-		}
+		Object[] args = { groupId };
+		List<String> userLogins = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_GROUP_MAP_GROUP, args, String.class);
+		groupMap.setGroupMembers(userLogins);
+		return groupMap;
 	}
 
 	/**
 	 * 
 	 */
 	public GroupMap lookupGroupMapUser(String userLogin) throws SQLException {
-		GroupMap groupMap = null;
-		Connection conn = null;
-		PreparedStatement stmt1 = null;
-		PreparedStatement stmt2 = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt1 = conn.prepareStatement(STATEMENT_SELECT_GROUP_MAP_USER);
-			stmt1.setString(1,userLogin);
-			rs = stmt1.executeQuery();
-			groupMap = new GroupMap(userLogin);
-			List<Integer> groupIds = new ArrayList<Integer>();
-			while (rs.next()) {
-				groupIds.add(new Integer(rs.getInt("group_id")));
-			}
-			groupMap.setGroupIds(groupIds);
-			// retrieve roles assigned through group assignment
-			stmt2 = conn.prepareStatement(STATEMENT_SELECT_GROUP_MAP_AUTHORITIES);
-			stmt2.setString(1, userLogin);
-			rs = stmt2.executeQuery();
-			List<String> roleNames = new ArrayList<String>();
-			while (rs.next()) {
-				roleNames.add(rs.getString("authority"));
-			}
-			groupMap.setRoleNames(roleNames);
-			return groupMap;
-		} finally {
-			DatabaseConnection.closeStatement(stmt1);
-			DatabaseConnection.closeConnection(conn, stmt2,rs);
-		}
+		Object[] args = { userLogin };
+		List<Integer> groupIds = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_GROUP_MAP_USER, args, Integer.class);
+		GroupMap groupMap = new GroupMap(userLogin);
+		groupMap.setGroupIds(groupIds);
+		// retrieve roles assigned through group assignment
+		List<String> roleNames = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_GROUP_MAP_AUTHORITIES, args, String.class);
+		groupMap.setRoleNames(roleNames);
+		return groupMap;
 	}
 
 	/**
 	 *
 	 */
 	public WikiGroup lookupWikiGroup(String groupName) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { groupName };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUP);
-			stmt.setString(1, groupName);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initWikiGroup(rs) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_GROUP, args, new WikiGroupMapper());
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -2927,17 +2624,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public WikiGroup lookupWikiGroupById(int groupId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { groupId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUP_BY_ID);
-			stmt.setInt(1, groupId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initWikiGroup(rs) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_GROUP_BY_ID, args, new WikiGroupMapper());
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 	
@@ -3024,16 +2716,11 @@ public class AnsiQueryHandler implements QueryHandler {
 	 * Return a count of all wiki users.
 	 */
 	public int lookupWikiUserCount() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER_COUNT);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getInt("user_count") : 0;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_USER_COUNT, Integer.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return 0;
 		}
 	}
 
@@ -3041,17 +2728,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public String lookupWikiUserEncryptedPassword(String username) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { username };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER_DETAILS_PASSWORD);
-			stmt.setString(1, username);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getString("password") : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_USER_DETAILS_PASSWORD, args, String.class);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -3842,18 +3524,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public ImageData getImageInfo(int fileId, int resized) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { fileId, resized };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_FILE_INFO);
-			stmt.setInt(1, fileId);
-			stmt.setInt(2, resized);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? new ImageData(rs.getString(1), rs.getInt(2), rs.getInt(3), null) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_INFO, args, new ImageDataMapper(false));
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -3861,18 +3537,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public ImageData getImageData(int fileId, int resized) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { fileId, resized };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_FILE_DATA);
-			stmt.setInt(1, fileId);
-			stmt.setInt(2, resized);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? new ImageData(rs.getInt(1), rs.getString(2), rs.getInt(3), rs.getInt(4), rs.getBytes(5)) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_DATA, args, new ImageDataMapper(true));
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -3880,18 +3550,199 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public ImageData getImageVersionData(int fileVersionId, int resized) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		Object[] args = { fileVersionId, resized };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_FILE_VERSION_DATA);
-			stmt.setInt(1, fileVersionId);
-			stmt.setInt(2, resized);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? new ImageData(rs.getInt(1), rs.getString(2), rs.getInt(3), rs.getInt(4), rs.getBytes(5)) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_VERSION_DATA, args, new ImageDataMapper(true));
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to category.
+	 */
+	private static final class CategoryMapper implements RowMapper<Category> {
+
+		private final String virtualWikiName;
+
+		/**
+		 *
+		 */
+		CategoryMapper(String virtualWikiName) {
+			this.virtualWikiName = virtualWikiName;
+		}
+
+		/**
+		 *
+		 */
+		public Category mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Category category = new Category();
+			category.setName(rs.getString("category_name"));
+			category.setVirtualWiki(this.virtualWikiName);
+			category.setChildTopicName(rs.getString("topic_name"));
+			category.setSortKey(rs.getString("sort_key"));
+			category.setTopicType(TopicType.findTopicType(rs.getInt("topic_type")));
+			return category;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to interwiki.
+	 */
+	private static final class ImageDataMapper implements RowMapper<ImageData> {
+
+		private final boolean isFileVersion;
+
+		/**
+		 *
+		 */
+		ImageDataMapper(boolean isFileVersion) {
+			this.isFileVersion = isFileVersion;
+		}
+
+		/**
+		 *
+		 */
+		public ImageData mapRow(ResultSet rs, int rowNum) throws SQLException {
+			String mimeType = rs.getString("mime_type");
+			int height = rs.getInt("image_height");
+			int width = rs.getInt("image_width");
+			byte[] data = (this.isFileVersion) ? rs.getBytes("file_data") : null;
+			ImageData imageData = new ImageData(mimeType, width, height, data);
+			if (this.isFileVersion) {
+				imageData.fileVersionId = rs.getInt("file_version_id");
+			}
+			return imageData;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to interwiki.
+	 */
+	private static final class InterwikiMapper implements RowMapper<Interwiki> {
+
+		/**
+		 *
+		 */
+		public Interwiki mapRow(ResultSet rs, int rowNum) throws SQLException {
+			String interwikiPrefix = rs.getString("interwiki_prefix");
+			String interwikiPattern = rs.getString("interwiki_pattern");
+			String interwikiDisplay = rs.getString("interwiki_display");
+			int interwikiType = rs.getInt("interwiki_type");
+			Interwiki interwiki = new Interwiki(interwikiPrefix, interwikiPattern, interwikiDisplay);
+			interwiki.setInterwikiType(interwikiType);
+			return interwiki;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to role.
+	 */
+	private static final class RoleMapper implements RowMapper<Role> {
+
+		/**
+		 *
+		 */
+		public Role mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Role role = new Role(rs.getString("role_name"));
+			role.setDescription(rs.getString("role_description"));
+			return role;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to virtual wiki.
+	 */
+	private static final class VirtualWikiMapper implements RowMapper<VirtualWiki> {
+
+		/**
+		 *
+		 */
+		public VirtualWiki mapRow(ResultSet rs, int rowNum) throws SQLException {
+			VirtualWiki virtualWiki = new VirtualWiki(rs.getString("virtual_wiki_name"));
+			virtualWiki.setVirtualWikiId(rs.getInt("virtual_wiki_id"));
+			virtualWiki.setRootTopicName(rs.getString("default_topic_name"));
+			virtualWiki.setLogoImageUrl(rs.getString("logo_image_url"));
+			virtualWiki.setMetaDescription(rs.getString("meta_description"));
+			virtualWiki.setSiteName(rs.getString("site_name"));
+			return virtualWiki;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to wiki file.
+	 */
+	private static final class WikiFileMapper implements RowMapper<WikiFile> {
+
+		private final String virtualWikiName;
+
+		/**
+		 *
+		 */
+		WikiFileMapper(String virtualWikiName) {
+			this.virtualWikiName = virtualWikiName;
+		}
+
+		/**
+		 *
+		 */
+		public WikiFile mapRow(ResultSet rs, int rowNum) throws SQLException {
+			WikiFile wikiFile = new WikiFile();
+			wikiFile.setFileId(rs.getInt("file_id"));
+			wikiFile.setAdminOnly(rs.getInt("file_admin_only") != 0);
+			wikiFile.setFileName(rs.getString("file_name"));
+			wikiFile.setVirtualWiki(this.virtualWikiName);
+			wikiFile.setUrl(rs.getString("file_url"));
+			wikiFile.setTopicId(rs.getInt("topic_id"));
+			wikiFile.setReadOnly(rs.getInt("file_read_only") != 0);
+			wikiFile.setDeleteDate(rs.getTimestamp("delete_date"));
+			wikiFile.setMimeType(rs.getString("mime_type"));
+			wikiFile.setFileSize(rs.getInt("file_size"));
+			return wikiFile;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to wiki file version.
+	 */
+	private static final class WikiFileVersionMapper implements RowMapper<WikiFileVersion> {
+
+		/**
+		 *
+		 */
+		public WikiFileVersion mapRow(ResultSet rs, int rowNum) throws SQLException {
+			WikiFileVersion wikiFileVersion = new WikiFileVersion();
+			wikiFileVersion.setFileVersionId(rs.getInt("file_version_id"));
+			wikiFileVersion.setFileId(rs.getInt("file_id"));
+			wikiFileVersion.setUploadComment(rs.getString("upload_comment"));
+			wikiFileVersion.setUrl(rs.getString("file_url"));
+			int userId = rs.getInt("wiki_user_id");
+			if (userId > 0) {
+				wikiFileVersion.setAuthorId(userId);
+			}
+			wikiFileVersion.setUploadDate(rs.getTimestamp("upload_date"));
+			wikiFileVersion.setMimeType(rs.getString("mime_type"));
+			wikiFileVersion.setAuthorDisplay(rs.getString("wiki_user_display"));
+			wikiFileVersion.setFileSize(rs.getInt("file_size"));
+			return wikiFileVersion;
+		}
+	}
+
+
+	/**
+	 * Inner class for converting result set to wiki group.
+	 */
+	private static final class WikiGroupMapper implements RowMapper<WikiGroup> {
+
+		/**
+		 *
+		 */
+		public WikiGroup mapRow(ResultSet rs, int rowNum) throws SQLException {
+			WikiGroup wikiGroup = new WikiGroup(rs.getString("group_name"));
+			wikiGroup.setGroupId(rs.getInt("group_id"));
+			wikiGroup.setDescription(rs.getString("group_description"));
+			return wikiGroup;
 		}
 	}
 }
