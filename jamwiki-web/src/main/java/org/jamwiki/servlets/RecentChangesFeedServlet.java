@@ -39,8 +39,6 @@ import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.AbstractController;
 
-import static org.jamwiki.utils.Utilities.urlEncodeUtf8;
-
 /**
  * Provides an RSS or Atom feed for recent changes.
  *
@@ -190,39 +188,49 @@ public class RecentChangesFeedServlet extends AbstractController {
 	 *
 	 */
 	private SyndEntry getFeedEntry(RecentChange change, boolean linkToVersion, String feedURL) {
-		SyndContent description;
 		SyndEntry entry = new SyndEntryImpl();
 		entry.setTitle(change.getTopicName());
 		entry.setAuthor(change.getAuthorName());
 		entry.setPublishedDate(change.getChangeDate());
-		description = new SyndContentImpl();
+		entry.setDescription(getEntryDescription(change));
+
+		String topicName = Utilities.encodeAndEscapeTopicName(change.getTopicName());
+		if(!change.isDelete()) {
+			StringBuilder url = new StringBuilder(feedURL);
+			if (linkToVersion) {
+				url.append("Special:History?topicVersionId=");
+				url.append(change.getTopicVersionId());
+				url.append("&topic=");
+			} 
+			url.append(topicName);
+			entry.setLink(url.toString());
+		}
+		// URI is used as GUID in RSS 2.0 and should therefore contain the
+		// version id
+		entry.setUri(feedURL + topicName + "#" + change.getTopicVersionId());
+		return entry;
+	}
+
+	private SyndContent getEntryDescription(RecentChange change) {
+		SyndContent description = new SyndContentImpl();
 		description.setType("text/plain");
+
 		StringBuffer descr = new StringBuffer();
 		if (!StringUtils.isBlank(change.getChangeComment())) {
 			descr.append(change.getChangeComment());
 		}
 		if (change.isDelete()) {
 			descr.append(" (deleted)");
-		} else {
-			if (linkToVersion) {
-				String url = feedURL + urlEncodeUtf8("Special:History?topicVersionId=" + change.getTopicVersionId() + "&topic=" + Utilities.encodeAndEscapeTopicName(change.getTopicName()));
-				entry.setLink(url);
-			} else {
-				entry.setLink(feedURL + Utilities.encodeAndEscapeTopicName(change.getTopicName()));
-			}
-		}
+		} 
 		if (change.isUndelete()) {
 			descr.append(" (undeleted)");
 		}
 		if (change.getMinor()) {
 			descr.append(" (minor)");
 		}
+
 		description.setValue(descr.toString());
-		entry.setDescription(description);
-		// URI is used as GUID in RSS 2.0 and should therefore contain the
-		// version id
-		entry.setUri(feedURL + Utilities.encodeAndEscapeTopicName(change.getTopicName()) + "#" + change.getTopicVersionId());
-		return entry;
+		return description;
 	}
 
 	/**
