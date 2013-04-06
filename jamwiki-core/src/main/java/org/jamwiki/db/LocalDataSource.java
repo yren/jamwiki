@@ -37,7 +37,7 @@ public class LocalDataSource extends BasicDataSource {
 	/**
 	 * Constructs a new WikiDataSource
 	 */
-	public LocalDataSource() throws SQLException, ClassNotFoundException {
+	public LocalDataSource() throws ClassNotFoundException, IllegalArgumentException {
 		super();
 		if (!StringUtils.isBlank(Environment.getValue(Environment.PROP_DB_DRIVER))) {
 			ResourceUtil.forName(Environment.getValue(Environment.PROP_DB_DRIVER));
@@ -76,13 +76,12 @@ public class LocalDataSource extends BasicDataSource {
 				try {
 					connectionPool.close();
 				} catch (Exception e) {
-				} // ignore any exception during cleanup
+					// ignore any exception during cleanup
+				}
 			}
-			throw ex;
+			throw new IllegalArgumentException("Invalid SQL connection settings: " + ex.getMessage());
 		} finally {
-			if (testConnection != null) {
-				testConnection.close();
-			}
+			DatabaseConnection.closeConnection(testConnection);
 		}
 		// the ConnectionPool is now initialised, so we can set the dbcp-when-exhausted-action
 		connectionPool.setWhenExhaustedAction((byte) Environment.getIntValue(Environment.PROP_DBCP_WHEN_EXHAUSTED_ACTION));

@@ -112,7 +112,7 @@ public class DatabaseConnection {
 	 * in the case of a container DataSource obtained via JNDI this method does nothing
 	 * except clear the static reference to the DataSource.
 	 */
-	protected static void closeConnectionPool() throws SQLException {
+	protected static void closeConnectionPool() {
 		try {
 			DataSource testDataSource = dataSource;
 			while (testDataSource instanceof DelegatingDataSource) {
@@ -123,8 +123,8 @@ public class DatabaseConnection {
 				((BasicDataSource) testDataSource).close();
 			}
 		} catch (SQLException e) {
-			logger.error("Unable to close connection pool", e);
-			throw e;
+			// log the connection pool closing failure, but there is no need to propagate
+			logger.warn("Unable to close connection pool", e);
 		}
 		// clear references to prevent them being reused (& allow garbage collection)
 		dataSource = null;
@@ -219,7 +219,7 @@ public class DatabaseConnection {
 	/**
 	 *
 	 */
-	protected static Connection getConnection() throws SQLException {
+	protected static Connection getConnection() {
 		if (dataSource == null) {
 			// DataSource has not yet been created, obtain it now
 			configDataSource();
@@ -230,9 +230,10 @@ public class DatabaseConnection {
 	/**
 	 * Static method that will configure a DataSource based on the Environment setup.
 	 */
-	private synchronized static void configDataSource() throws SQLException {
+	private synchronized static void configDataSource() throws IllegalArgumentException {
 		if (dataSource != null) {
-			closeConnectionPool(); // DataSource has already been created so remove it
+			// DataSource has already been created so remove it
+			closeConnectionPool();
 		}
 		String url = Environment.getValue(Environment.PROP_DB_URL);
 		DataSource targetDataSource = null;
@@ -242,7 +243,7 @@ public class DatabaseConnection {
 				targetDataSource = new LocalDataSource();
 			} catch (ClassNotFoundException e) {
 				logger.error("Failure while configuring local data source", e);
-				throw new SQLException("Failure while configuring local data source: " + e.toString());
+				throw new IllegalArgumentException("Failure while configuring local data source: " + e.toString());
 			}
 		} else {
 			try {
@@ -252,7 +253,7 @@ public class DatabaseConnection {
 				targetDataSource = (DataSource)ctx.lookup(url);
 			} catch (NamingException e) {
 				logger.error("Failure while configuring JNDI data source with URL: " + url, e);
-				throw new SQLException("Unable to configure JNDI data source with URL " + url + ": " + e.toString());
+				throw new IllegalArgumentException("Unable to configure JNDI data source with URL " + url + ": " + e.toString());
 			}
 		}
 		dataSource = new LazyConnectionDataSourceProxy(targetDataSource);
@@ -262,7 +263,7 @@ public class DatabaseConnection {
 	/**
 	 * Return a Spring JdbcTemplate suitable for querying the database.
 	 */
-	protected static JdbcTemplate getJdbcTemplate() throws SQLException {
+	protected static JdbcTemplate getJdbcTemplate() {
 		if (jdbcTemplate == null) {
 			if (dataSource == null) {
 				// DataSource has not yet been created, obtain it now
@@ -356,7 +357,7 @@ public class DatabaseConnection {
 	 * @return TransactionStatus
 	 * @throws SQLException
 	 */
-	protected static TransactionStatus startTransaction(TransactionDefinition definition) throws SQLException {
+	protected static TransactionStatus startTransaction(TransactionDefinition definition) {
 		if (transactionManager == null || dataSource == null) {
 			configDataSource(); // this will create both the DataSource and a TransactionManager
 		}

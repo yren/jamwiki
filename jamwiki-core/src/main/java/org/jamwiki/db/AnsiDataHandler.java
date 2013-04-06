@@ -2660,8 +2660,6 @@ public class AnsiDataHandler {
 		try {
 			conn = DatabaseConnection.getConnection();
 			this.addTopicVersions(topic, topicVersions, conn);
-		} catch (SQLException e) {
-			throw new DataAccessException(e);
 		} finally {
 			DatabaseConnection.closeConnection(conn);
 		}
