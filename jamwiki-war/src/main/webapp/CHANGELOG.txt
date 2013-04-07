@@ -14,11 +14,12 @@ New Features:
 
 Bugfixes:
 
-  * None.
+  * Fix error that could cause categories to be initialized with the name
+    "category_name" instead of the actual category name.
 
 Translation Updates:
 
-  * None.
+  * Updated Russian translations (shar).
 
 
 1.3.1

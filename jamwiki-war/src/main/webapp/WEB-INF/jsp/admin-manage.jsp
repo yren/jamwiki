@@ -130,9 +130,11 @@
 				<c:forEach items="${versions}" var="version">
 				<option value="${version.topicVersionId}"><fmt:formatDate value="${version.changeDate}" type="both" pattern="${pageInfo.datePatternDateAndTime}" timeZone="${pageInfo.timeZoneId}" /> - ${version.authorName}</option>
 				</c:forEach>
-				</select>
-				<p><fmt:message key="common.caption.view" />: <jamwiki:pagination total="${numChanges}" rootUrl="Special:Manage?topic=${pageInfo.topicNameUrlEncoded}" /></p>
+				</select>				
 			</span>
+		</div>
+		<div class="row">
+			<span><fmt:message key="common.caption.view" />: <jamwiki:pagination total="${numChanges}" rootUrl="Special:Manage?topic=${pageInfo.topicNameUrlEncoded}" /></span>
 		</div>
 		<div class="row">
 			<%-- store in a variable to allow escaping --%>

@@ -1501,7 +1501,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	 */
 	private Category initCategory(ResultSet rs, String virtualWikiName) throws SQLException {
 		Category category = new Category();
-		category.setName("category_name");
+		category.setName(rs.getString("category_name"));
 		category.setVirtualWiki(virtualWikiName);
 		category.setChildTopicName(rs.getString("topic_name"));
 		category.setSortKey(rs.getString("sort_key"));
