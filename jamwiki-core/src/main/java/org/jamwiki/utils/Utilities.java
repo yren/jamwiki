@@ -106,14 +106,26 @@ public abstract class Utilities {
 		if (StringUtils.isBlank(url)) {
 			return url;
 		}
-		String result = url;
+		String result = urlDecodeUtf8(url);
+		return Utilities.decodeTopicName(result, decodeUnderlines);
+	}
+
+	public static String urlEncodeUtf8(String input){
 		try {
-			result = URLDecoder.decode(result, "UTF-8");
+			return URLEncoder.encode(input, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			// this should never happen
-			throw new IllegalStateException("Unsupporting encoding UTF-8");
+			throw new IllegalStateException("Unsupported encoding UTF-8");
 		}
-		return Utilities.decodeTopicName(result, decodeUnderlines);
+	}
+
+	public static String urlDecodeUtf8(String input){
+		try {
+			return URLDecoder.decode(input, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// this should never happen
+			throw new IllegalStateException("Unsupported encoding UTF-8");
+		}
 	}
 
 	/**
@@ -160,13 +172,8 @@ public abstract class Utilities {
 		if (StringUtils.isBlank(url)) {
 			return url;
 		}
-		String result = Utilities.encodeTopicName(url);
-		try {
-			result = URLEncoder.encode(result, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// this should never happen
-			throw new IllegalStateException("Unsupporting encoding UTF-8");
-		}
+		String result = urlEncodeUtf8(Utilities.encodeTopicName(url));
+
 		// un-encode colons
 		result = StringUtils.replace(result, "%3A", ":");
 		// un-encode forward slashes

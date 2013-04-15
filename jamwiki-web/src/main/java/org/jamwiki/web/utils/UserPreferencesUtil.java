@@ -105,7 +105,6 @@ public class UserPreferencesUtil {
 		// first get any locales with explicit JAMWiki configuration
 		locales.putAll(WikiConfiguration.getInstance().getTranslations());
 		// now get the system locales
-		Locale[] localeArray = Locale.getAvailableLocales();
 		for (Locale locale : Locale.getAvailableLocales()) {
 			String key = locale.toString();
 			String value = key + " - " + locale.getDisplayName(locale);

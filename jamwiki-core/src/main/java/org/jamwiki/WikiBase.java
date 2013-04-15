@@ -91,7 +91,7 @@ public class WikiBase {
 	 * @throws IOException If the instance cannot be instantiated.
 	 */
 	private WikiBase() throws IOException {
-		this.reload();
+		WikiBase.reload();
 	}
 
 	/**
