@@ -118,53 +118,43 @@ public interface QueryHandler {
 	 * Delete all authorities for a specific group.
 	 *
 	 * @param groupId The group id for which authorities are being deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteGroupAuthorities(int groupId, Connection conn) throws SQLException;
+	void deleteGroupAuthorities(int groupId) throws SQLException;
 
 	/**
 	 * Delete an interwiki record from the interwiki table.
 	 *
 	 * @param interwiki The Interwiki record to be deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteInterwiki(Interwiki interwiki, Connection conn) throws SQLException;
+	void deleteInterwiki(Interwiki interwiki) throws SQLException;
 
 	/**
 	 * Delete all records from the recent changes table for a specific topic.
 	 *
 	 * @param topicId The topic id for which recent changes are being deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteRecentChanges(int topicId, Connection conn) throws SQLException;
+	void deleteRecentChanges(int topicId) throws SQLException;
 
 	/**
 	 * Delete all categories associated with a topic.
 	 *
 	 * @param topicId The topic for which category association records are being
 	 *  deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteTopicCategories(int topicId, Connection conn) throws SQLException;
+	void deleteTopicCategories(int topicId) throws SQLException;
 
 	/**
 	 * Delete all topic links associated with a topic.
 	 *
 	 * @param topicId The topic for which link association records are being
 	 *  deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteTopicLinks(int topicId, Connection conn) throws SQLException;
+	void deleteTopicLinks(int topicId) throws SQLException;
 
 	/**
 	 * Delete a topic version record.  This method will fail if there is a
@@ -176,30 +166,27 @@ public interface QueryHandler {
 	 * @param previousTopicVersionId If this record was referenced as a
 	 *  "previous topic version ID" then this value will be used as the
 	 *  replacement for those records.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId, Connection conn) throws SQLException;
+	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId) throws SQLException;
 
 	/**
 	 * Delete all authorities for a specific user.
 	 *
 	 * @param username The username for which authorities are being deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteUserAuthorities(String username, Connection conn) throws SQLException;
+	void deleteUserAuthorities(String username) throws SQLException;
 
 	/**
 	 * Delete group membership from database. Notice that this may be the deletion of
 	 * all members of a group (when acting as a container of group users) or the deletion of
 	 * all memberships of a user (when acting as a group list for a user).
+	 *
 	 * @param groupMap The GroupMap to delete
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteGroupMap(GroupMap groupMap, Connection conn) throws SQLException;
+	void deleteGroupMap(GroupMap groupMap) throws SQLException;
 	
 	/**
 	 * Delete a user's watchlist entry using the topic name to determine which
@@ -210,11 +197,9 @@ public interface QueryHandler {
 	 * @param topicName The topic name for which the watchlist entry is being
 	 *  deleted.
 	 * @param userId The user for which the watchlist entry is being deleted.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId, Connection conn) throws SQLException;
+	void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException;
 
 	/**
 	 * Drop all JAMWiki database objects.  This method drops tables, indexes, and
@@ -232,22 +217,20 @@ public interface QueryHandler {
 	 * to execute a SQL query from a QueryHandler-specific property file.
 	 *
 	 * @param prop The name of the SQL property file value to execute.
-	 * @param conn The SQL connection to use when executing the SQL.
 	 * @throws SQLException Thrown if any error occurs during execution.
 	 */
-	void executeUpgradeQuery(String prop, Connection conn) throws SQLException;
+	void executeUpgradeQuery(String prop) throws SQLException;
 
 	/**
 	 * This method should be called only during upgrades and provides the capability
 	 * to execute update SQL from a QueryHandler-specific property file.
 	 *
 	 * @param prop The name of the SQL property file value to execute.
-	 * @param conn The SQL connection to use when executing the SQL.
 	 * @throws SQLException Thrown if any error occurs during execution.
 	 *
 	 * @return true if action actually performed and false otherwise.
 	 */
-	boolean executeUpgradeUpdate(String prop, Connection conn) throws SQLException;
+	boolean executeUpgradeUpdate(String prop) throws SQLException;
 
 	/**
 	 * Return a simple query, that if successfully run indicates that JAMWiki
@@ -433,16 +416,12 @@ public interface QueryHandler {
 	List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) throws SQLException;
 
 	/**
-	 * Return a map of all active user blocks, where the key is the ip or user id
-	 * of the blocked user and the value is the UserBlock object.
+	 * Return a list of all active user blocks.
 	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return A map of all active user blocks, where the key is the ip or user id
-	 * of the blocked user and the value is the UserBlock object.
+	 * @return A list of all active user blocks.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	Map<Object, UserBlock> getUserBlocks(Connection conn) throws SQLException;
+	List<UserBlock> getUserBlocks() throws SQLException;
 
 	/**
 	 * Retrieve a list of all recent changes made to the wiki by a specific user.
@@ -529,11 +508,9 @@ public interface QueryHandler {
 	 * @param categoryList A list of category records to create.
 	 * @param virtualWikiId The virtual wiki id for the record that is being added.
 	 * @param topicId The ID of the topic record to which this category is being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId, Connection conn) throws SQLException;
+	void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId) throws SQLException;
 
 	/**
 	 * Add a new authority for a specified group.  The group must not already have
@@ -542,66 +519,54 @@ public interface QueryHandler {
 	 * @param groupId The group id for the group being assigned a role, or -1
 	 *  if a user is being assigned a role.
 	 * @param authority The authority being assigned.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertGroupAuthority(int groupId, String authority, Connection conn) throws SQLException;
+	void insertGroupAuthority(int groupId, String authority) throws SQLException;
 
 	/**
 	 * Add a user to a group.
 	 *
 	 * @param username The username for the user being added to the group.
 	 * @param groupId The group ID for the group.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertGroupMember(String username, int groupId, Connection conn) throws SQLException;
+	void insertGroupMember(String username, int groupId) throws SQLException;
 
 	/**
 	 * Add an interwiki record to the database.  Note that this method will fail if a
 	 * record with the same prefix already exists.
 	 *
 	 * @param interwiki The Interwiki record to insert into the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertInterwiki(Interwiki interwiki, Connection conn) throws SQLException;
+	void insertInterwiki(Interwiki interwiki) throws SQLException;
 
 	/**
 	 * Add a new log item record to the database.
 	 *
 	 * @param logItem The LogItem record that is to be added to the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertLogItem(LogItem logItem, int virtualWikiId, Connection conn) throws SQLException;
+	void insertLogItem(LogItem logItem, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Add a new recent change record to the database.
 	 *
 	 * @param change The RecentChange record that is to be added to the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertRecentChange(RecentChange change, int virtualWikiId, Connection conn) throws SQLException;
+	void insertRecentChange(RecentChange change, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Add a new role record to the database.  The role must not already exist
 	 * in the database or else an error will be thrown.
 	 *
 	 * @param role The Role record that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertRole(Role role, Connection conn) throws SQLException;
+	void insertRole(Role role) throws SQLException;
 
 	/**
 	 * Add a new topic record to the database.  The topic must not already exist
@@ -609,11 +574,9 @@ public interface QueryHandler {
 	 *
 	 * @param topic The Topic record that is to be added to the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertTopic(Topic topic, int virtualWikiId, Connection conn) throws SQLException;
+	void insertTopic(Topic topic, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Add new topic link records for a topic to the database.  Note that this
@@ -624,11 +587,9 @@ public interface QueryHandler {
 	 *  the form of Topic objects, which need to be populated only with namespace
 	 *  and page name.
 	 * @param topicId The ID of the topic record to which the links are being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertTopicLinks(List<Topic> topicLinks, int topicId, Connection conn) throws SQLException;
+	void insertTopicLinks(List<Topic> topicLinks, int topicId) throws SQLException;
 
 	/**
 	 * Add a new topic version record to the database.  The topic version must
@@ -636,11 +597,9 @@ public interface QueryHandler {
 	 *
 	 * @param topicVersions A list of TopicVersion objects, each containing the
 	 *  author, date, and other information about the version being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertTopicVersions(List<TopicVersion> topicVersions, Connection conn) throws SQLException;
+	void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException;
 
 	/**
 	 * Add a new authority for a specified user.  The user must not already have
@@ -649,44 +608,36 @@ public interface QueryHandler {
 	 * @param username The username for the user being assigned a role, or null
 	 *  if a group is being assigned a role.
 	 * @param authority The authority being assigned.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertUserAuthority(String username, String authority, Connection conn) throws SQLException;
+	void insertUserAuthority(String username, String authority) throws SQLException;
 
 	/**
 	 * Add a new user authentication credential to the database.  The user authentication
 	 * credential must not already exist in the database or else an error will be thrown.
 	 *
 	 * @param userDetails The user authentication credential that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertUserDetails(WikiUserDetails userDetails, Connection conn) throws SQLException;
+	void insertUserDetails(WikiUserDetails userDetails) throws SQLException;
 
 	/**
 	 * Add a new user block record to the database.  The user block must
 	 * not already exist in the database or else an error will be thrown.
 	 *
 	 * @param userBlock The UserBlock record that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertUserBlock(UserBlock userBlock, Connection conn) throws SQLException;
+	void insertUserBlock(UserBlock userBlock) throws SQLException;
 
 	/**
 	 * Add a new virtual wiki record to the database.  The virtual wiki must
 	 * not already exist in the database or else an error will be thrown.
 	 *
 	 * @param virtualWiki The VirtualWiki record that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertVirtualWiki(VirtualWiki virtualWiki, Connection conn) throws SQLException;
+	void insertVirtualWiki(VirtualWiki virtualWiki) throws SQLException;
 
 	/**
 	 * Add a new watchlist entry record to the database.  An identical entry
@@ -698,11 +649,9 @@ public interface QueryHandler {
 	 *  value should be set only for topics that do not yet exist, and should
 	 *  be set to <code>null</code> for existing topics.
 	 * @param userId The ID of the user for the watchlist entry.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertWatchlistEntry(int virtualWikiId, String topicName, int userId, Connection conn) throws SQLException;
+	void insertWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException;
 
 	/**
 	 * Add a new wiki file record to the database.  The wiki file must not
@@ -710,11 +659,9 @@ public interface QueryHandler {
 	 *
 	 * @param wikiFile The WikiFile record that is to be added to the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being added.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertWikiFile(WikiFile wikiFile, int virtualWikiId, Connection conn) throws SQLException;
+	void insertWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Add a new wiki file version record to the database.  The wiki file
@@ -723,34 +670,37 @@ public interface QueryHandler {
 	 *
 	 * @param wikiFileVersion The WikiFileVersion record that is to be added
 	 *  to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertWikiFileVersion(WikiFileVersion wikiFileVersion, Connection conn) throws SQLException;
+	void insertWikiFileVersion(WikiFileVersion wikiFileVersion) throws SQLException;
 
 	/**
 	 * Add a new group record to the database.  The group must not already exist
 	 * in the database or else an error will be thrown.
 	 *
 	 * @param group The WikiGroup record that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertWikiGroup(WikiGroup group, Connection conn) throws SQLException;
+	void insertWikiGroup(WikiGroup group) throws SQLException;
 
 	/**
 	 * Add a new user record to the database.  The user must not already exist
 	 * in the database or else an error will be thrown.
 	 *
 	 * @param user The WikiUser record that is to be added to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertWikiUser(WikiUser user, Connection conn) throws SQLException;
-	
+	void insertWikiUser(WikiUser user) throws SQLException;
+
+	/**
+	 * Create a user's preferences, excluding anything that matches the defaults.
+	 *
+	 * @param user The user whose preferences are being inserted.
+	 * @param preferenceDefaults The default preference values for all users.
+	 * @throws SQLException Thrown if any error occurs during method execution.
+	 */
+	void insertWikiUserPreferences(WikiUser user, Map<String, String> preferenceDefaults) throws SQLException;
+
 	/**
 	 * Add a new key/value preference in the database.
 	 * 
@@ -758,7 +708,7 @@ public interface QueryHandler {
 	 * @param userPreferenceDefaultValue The default value for this preference
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr, Connection conn) throws SQLException;
+	void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException;
 
 	/**
 	 * Retrieve a list of all topics in a category.
@@ -795,12 +745,10 @@ public interface QueryHandler {
 	/**
 	 * Retrieve a list of all current namespace objects.
 	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @return A list of all current namespace objects, never <code>null</code>.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	List<Namespace> lookupNamespaces(Connection conn) throws SQLException;
+	List<Namespace> lookupNamespaces() throws SQLException;
 
 	/**
 	 * Retrieve a topic that matches a given name and virtual wiki.
@@ -810,14 +758,12 @@ public interface QueryHandler {
 	 * @param namespace The Namespace for the topic being retrieved.
 	 * @param pageName The topic pageName (topic name without the namespace) for
 	 *  the topic being retrieved.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.  My be <code>null</code>.
 	 * @return A topic containing all topic information for the given topic
 	 *  name and virtual wiki.  If no matching topic is found <code>null</code> is
 	 *  returned.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName, Connection conn) throws SQLException;
+	Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName) throws SQLException;
 
 	/**
 	 * Retrieve a topic that matches a given topic ID and virtual wiki.
@@ -825,11 +771,9 @@ public interface QueryHandler {
 	 * @param topicId The ID of the topic being retrieved.
 	 * @return A topic containing all topic information for the given topic
 	 *  ID.  If no matching topic is found <code>null</code> is returned.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.  My be <code>null</code>.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public Topic lookupTopicById(int topicId, Connection conn) throws SQLException;
+	public Topic lookupTopicById(int topicId) throws SQLException;
 
 	/**
 	 * Retrieve a list of all topic names of a given type within a virtual wiki.
@@ -948,7 +892,7 @@ public interface QueryHandler {
 	 *  virtual wiki.  If no results are found then an empty list is returned.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted, Connection conn) throws SQLException;
+	Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted) throws SQLException;
 
 	/**
 	 * Retrieve a result set containing all wiki file information for a given WikiFile.
@@ -1014,12 +958,10 @@ public interface QueryHandler {
 	 * Retrieve a the user id that matches the given login.
 	 *
 	 * @param login The login of the user record being retrieved.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @return The user id that matches the given login, or -1 if no match is found.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	int lookupWikiUser(String login, Connection conn) throws SQLException;
+	int lookupWikiUser(String login) throws SQLException;
 
 	/**
 	 * Get the data related to a password reset request in WikiUser container.
@@ -1094,22 +1036,18 @@ public interface QueryHandler {
 	 *
 	 * @param virtualWikiId The virtual wiki id for which log items are being
 	 *  reloaded.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void reloadLogItems(int virtualWikiId, Connection conn) throws SQLException;
+	void reloadLogItems(int virtualWikiId) throws SQLException;
 
 	/**
 	 * Refresh the recent changes content by reloading the recent changes table.
 	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @param limit The maximum number of topic history versions to examine
 	 *  when reloading recent changes.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void reloadRecentChanges(Connection conn, int limit) throws SQLException;
+	void reloadRecentChanges(int limit) throws SQLException;
 
 	/**
 	 * Replace the existing configuration records with a new set of values.  This
@@ -1119,11 +1057,9 @@ public interface QueryHandler {
 	 * @param configuration A map of key-value pairs corresponding to the new
 	 *  configuration information.  These values will replace all existing
 	 *  configuration values in the system.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void updateConfiguration(Map<String, String> configuration, Connection conn) throws SQLException;
+	public void updateConfiguration(Map<String, String> configuration) throws SQLException;
 
 	/**
 	 * Add or update a namespace.  This method will add a new record if the
@@ -1131,11 +1067,9 @@ public interface QueryHandler {
 	 * record.
 	 *
 	 * @param namespace The namespace object to add to the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateNamespace(Namespace namespace, Connection conn) throws SQLException;
+	void updateNamespace(Namespace namespace) throws SQLException;
 
 	/**
 	 * Add or update a virtual-wiki specific label for a namespace.  This method will
@@ -1146,114 +1080,101 @@ public interface QueryHandler {
 	 *  being added or updated.
 	 * @param virtualWikiId The virtual wiki id for which namespace translations are
 	 *  being added or updated.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId, Connection conn) throws SQLException;
+	void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Update a role record in the database.
 	 *
 	 * @param role The Role record that is to be updated in the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateRole(Role role, Connection conn) throws SQLException;
+	void updateRole(Role role) throws SQLException;
 
 	/**
 	 * Update a topic record in the database.
 	 *
 	 * @param topic The Topic record that is to be updated in the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being updated.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateTopic(Topic topic, int virtualWikiId, Connection conn) throws SQLException;
+	void updateTopic(Topic topic, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Update the namespace IDs for the provided topics.
 	 *
 	 * @param topics A list of topic objects to update.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void updateTopicNamespaces(List<Topic> topics, Connection conn) throws SQLException;
+	public void updateTopicNamespaces(List<Topic> topics) throws SQLException;
 
 	/**
 	 * Update a topic version record in the database.
 	 *
 	 * @param topicVersion The TopicVersion record that is to be updated in the
 	 *  database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void updateTopicVersion(TopicVersion topicVersion, Connection conn) throws SQLException;
+	public void updateTopicVersion(TopicVersion topicVersion) throws SQLException;
 
 	/**
 	 * Update user authentication credentials.
 	 *
 	 * @param userDetails The user authentication credentials to update.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void updateUserDetails(WikiUserDetails userDetails, Connection conn) throws SQLException;
+	public void updateUserDetails(WikiUserDetails userDetails) throws SQLException;
 
 	/**
 	 * Update a user block record in the database.
 	 *
 	 * @param userBlock The UserBlock record that is to be updated in the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateUserBlock(UserBlock userBlock, Connection conn) throws SQLException;
+	void updateUserBlock(UserBlock userBlock) throws SQLException;
 
 	/**
 	 * Update a virtual wiki record in the database.
 	 *
 	 * @param virtualWiki The VirtualWiki record that is to be updated in the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateVirtualWiki(VirtualWiki virtualWiki, Connection conn) throws SQLException;
+	void updateVirtualWiki(VirtualWiki virtualWiki) throws SQLException;
 
 	/**
 	 * Update a wiki file record in the database.
 	 *
 	 * @param wikiFile The WikiFile record that is to be updated in the database.
 	 * @param virtualWikiId The virtual wiki id for the record that is being updated.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateWikiFile(WikiFile wikiFile, int virtualWikiId, Connection conn) throws SQLException;
+	void updateWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException;
 
 	/**
 	 * Update a group record in the database.
 	 *
 	 * @param group The WikiGroup record that is to be updated in the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateWikiGroup(WikiGroup group, Connection conn) throws SQLException;
+	void updateWikiGroup(WikiGroup group) throws SQLException;
 
 	/**
 	 * Update a wiki user record in the database.
 	 *
 	 * @param user The WikiUser record that is to be updated in the database.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateWikiUser(WikiUser user, Connection conn) throws SQLException;
+	void updateWikiUser(WikiUser user) throws SQLException;
+
+	/**
+	 * Update a user's preferences, excluding anything that matches the defaults.
+	 *
+	 * @param user The user whose preferences are being updated.
+	 * @param preferenceDefaults The default preference values for all users.
+	 * @throws SQLException Thrown if any error occurs during method execution.
+	 */
+	void updateWikiUserPreferences(WikiUser user) throws SQLException;
 
 	/**
 	 * Modify the default value of a named use preference.
@@ -1262,26 +1183,22 @@ public interface QueryHandler {
 	 * @param userPreferenceDefaultValue The new default value for the preference
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr, Connection conn) throws SQLException;
+	void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException;
 	
 	/**
 	 * Add new image or other data to database.
 	 *
 	 * @param imageData The image and it's arrtibutes to store.
 	 * @param isResized Must be true when inserting resized version of image and false otherwise.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void insertImage(ImageData imageData, boolean isResized, Connection conn) throws SQLException;
+	public void insertImage(ImageData imageData, boolean isResized) throws SQLException;
 
 	/**
 	 * @param fileId File identifier.
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
-	public void deleteResizedImages(int fileId, Connection conn) throws SQLException;
+	public void deleteResizedImages(int fileId) throws SQLException;
 
 	/**
 	 * @param fileId File identifier.

@@ -364,171 +364,116 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteGroupAuthorities(int groupId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_GROUP_AUTHORITIES);
-			stmt.setInt(1, groupId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteGroupAuthorities(int groupId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_GROUP_AUTHORITIES,
+				groupId
+		);
 	}
 
 	/**
 	 * 
 	 */
-	public void deleteGroupMap(GroupMap groupMap, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			switch(groupMap.getGroupMapType()) {
-			case (GroupMap.GROUP_MAP_GROUP): {
-				stmt = conn.prepareStatement(STATEMENT_DELETE_GROUP_MAP_GROUP);
-				stmt.setInt(1, groupMap.getGroupId());
-				stmt.executeUpdate();
-				break;
-			}
-			case (GroupMap.GROUP_MAP_USER): {
-				stmt = conn.prepareStatement(STATEMENT_DELETE_GROUP_MAP_USER);
-				stmt.setString(1, groupMap.getUserLogin());
-				stmt.executeUpdate();
-				break;
-			}
-			default: throw new SQLException("deleteGroupMap - Group type invalid");
-			}
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+	public void deleteGroupMap(GroupMap groupMap) throws SQLException {
+		if (groupMap.getGroupMapType() == GroupMap.GROUP_MAP_GROUP) {
+			DatabaseConnection.getJdbcTemplate().update(
+					STATEMENT_DELETE_GROUP_MAP_GROUP,
+					groupMap.getGroupId()
+			);
+		} else if (groupMap.getGroupMapType() == GroupMap.GROUP_MAP_USER) {
+			DatabaseConnection.getJdbcTemplate().update(
+					STATEMENT_DELETE_GROUP_MAP_USER,
+					groupMap.getUserLogin()
+			);
 		}
 	}
 	
 	/**
 	 *
 	 */
-	public void deleteInterwiki(Interwiki interwiki, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_INTERWIKI);
-			stmt.setString(1, interwiki.getInterwikiPrefix());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteInterwiki(Interwiki interwiki) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_INTERWIKI,
+				interwiki.getInterwikiPrefix()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteRecentChanges(int topicId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_RECENT_CHANGES_TOPIC);
-			stmt.setInt(1, topicId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteRecentChanges(int topicId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_RECENT_CHANGES_TOPIC,
+				topicId
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteTopicCategories(int childTopicId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_TOPIC_CATEGORIES);
-			stmt.setInt(1, childTopicId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteTopicCategories(int childTopicId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_TOPIC_CATEGORIES,
+				childTopicId
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteTopicLinks(int topicId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_TOPIC_LINKS);
-			stmt.setInt(1, topicId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteTopicLinks(int topicId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_TOPIC_LINKS,
+				topicId
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			// delete references to the topic version from the log table
-			stmt = conn.prepareStatement(STATEMENT_DELETE_LOG_ITEMS_BY_TOPIC_VERSION);
-			stmt.setInt(1, topicVersionId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			// delete references to the topic version from the recent changes table
-			stmt = conn.prepareStatement(STATEMENT_DELETE_RECENT_CHANGES_TOPIC_VERSION);
-			stmt.setInt(1, topicVersionId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			// update any recent changes that refer to this record as the previous record
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_RECENT_CHANGES_PREVIOUS_VERSION_ID);
-			if (previousTopicVersionId != null) {
-				stmt.setInt(1, previousTopicVersionId);
-			} else {
-				stmt.setNull(1, Types.INTEGER);
-			}
-			stmt.setInt(2, topicVersionId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			// delete the topic version record
-			stmt = conn.prepareStatement(STATEMENT_DELETE_TOPIC_VERSION);
-			stmt.setInt(1, topicVersionId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_LOG_ITEMS_BY_TOPIC_VERSION,
+				topicVersionId
+		);
+		// delete references to the topic version from the recent changes table
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_RECENT_CHANGES_TOPIC_VERSION,
+				topicVersionId
+		);
+		// update any recent changes that refer to this record as the previous record
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_RECENT_CHANGES_PREVIOUS_VERSION_ID,
+				previousTopicVersionId,
+				topicVersionId
+		);
+		// delete the topic version record
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_TOPIC_VERSION,
+				topicVersionId
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteUserAuthorities(String username, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_AUTHORITIES);
-			stmt.setString(1, username);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteUserAuthorities(String username) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_AUTHORITIES,
+				username
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_WATCHLIST_ENTRY);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setString(2, topicName);
-			stmt.setInt(3, userId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_WATCHLIST_ENTRY,
+				virtualWikiId,
+				topicName,
+				userId
+		);
 	}
 
 	/**
@@ -576,17 +521,18 @@ public class AnsiQueryHandler implements QueryHandler {
 	 * @param conn The SQL connection to use when executing the SQL.
 	 * @throws SQLException Thrown if any error occurs during execution.
 	 */
-	public void executeUpgradeQuery(String prop, Connection conn) throws SQLException {
+	public void executeUpgradeQuery(String prop) throws SQLException {
 		String sql = this.props.getProperty(prop);
 		if (sql == null) {
 			throw new SQLException("No property found for " + prop);
 		}
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		try {
 			stmt = conn.prepareStatement(sql);
 			stmt.executeQuery();
 		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.closeConnection(conn, stmt);
 		}
 	}
 
@@ -600,7 +546,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 * @return true if action actually performed and false otherwise.
 	 */
-	public boolean executeUpgradeUpdate(String prop, Connection conn) throws SQLException {
+	public boolean executeUpgradeUpdate(String prop) throws SQLException {
 		String sql = this.props.getProperty(prop);
 		if (sql == null) {
 			throw new SQLException("No property found for " + prop);
@@ -609,13 +555,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			// some queries such as validation queries are not defined on all databases
 			return false;
 		}
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(sql);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+		DatabaseConnection.getJdbcTemplate().update(sql);
 		return true;
 	}
 
@@ -675,111 +615,58 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getCategoriesStatement(conn, virtualWikiId, virtualWikiName, pagination);
-			rs = stmt.executeQuery();
-			List<Category> results = new ArrayList<Category>();
-			while (rs.next()) {
-				Category category = new Category();
-				category.setName(rs.getString("category_name"));
-				// child topic name not initialized since it is not needed
-				category.setVirtualWiki(virtualWikiName);
-				category.setSortKey(rs.getString("sort_key"));
-				// topic type not initialized since it is not needed
-				results.add(category);
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_CATEGORIES,
+				virtualWikiId,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		);
+		List<Category> categories = new ArrayList<Category>();
+		for (Map<String, Object> result : results) {
+			Category category = new Category();
+			category.setName((String)result.get("category_name"));
+			// child topic name not initialized since it is not needed
+			category.setVirtualWiki(virtualWikiName);
+			category.setSortKey((String)result.get("sort_key"));
+			// topic type not initialized since it is not needed
+			categories.add(category);
 		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getCategoriesStatement(Connection conn, int virtualWikiId, String virtualWikiName, Pagination pagination) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_CATEGORIES);
-		stmt.setInt(1, virtualWikiId);
-		stmt.setInt(2, pagination.getNumResults());
-		stmt.setInt(3, pagination.getOffset());
-		return stmt;
+		return categories;
 	}
 
 	/**
 	 *
 	 */
 	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		List<LogItem> logItems = new ArrayList<LogItem>();
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getLogItemsStatement(conn, virtualWikiId, virtualWikiName, logType, pagination, descending);
-			// FIXME - sort order ignored
-			rs = stmt.executeQuery();
-			while (rs.next()) {
-				logItems.add(this.initLogItem(rs, virtualWikiName));
-			}
-			return logItems;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getLogItemsStatement(Connection conn, int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) throws SQLException {
-		int index = 1;
-		PreparedStatement stmt = null;
+		// FIXME - sort order ignored
+		String sql = null;
+		Object[] args = null;
+		int index = 0;
 		if (logType == -1) {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_LOG_ITEMS);
+			sql = STATEMENT_SELECT_LOG_ITEMS;
+			args = new Object[3];
 		} else {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_LOG_ITEMS_BY_TYPE);
-			stmt.setInt(index++, logType);
+			sql = STATEMENT_SELECT_LOG_ITEMS_BY_TYPE;
+			args = new Object[4];
+			args[index++] = logType;
 		}
-		stmt.setInt(index++, virtualWikiId);
-		stmt.setInt(index++, pagination.getNumResults());
-		stmt.setInt(index++, pagination.getOffset());
-		return stmt;
+		args[index++] = virtualWikiId;
+		args[index++] = pagination.getNumResults();
+		args[index++] = pagination.getOffset();
+		return DatabaseConnection.getJdbcTemplate().query(sql, args, new LogItemMapper(virtualWikiName));
 	}
 
 	/**
 	 *
 	 */
 	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getRecentChangesStatement(conn, virtualWiki, pagination, descending);
-			// FIXME - sort order ignored
-			rs = stmt.executeQuery();
-			List<RecentChange> recentChanges = new ArrayList<RecentChange>();
-			while (rs.next()) {
-				recentChanges.add(this.initRecentChange(rs));
-			}
-			return recentChanges;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getRecentChangesStatement(Connection conn, String virtualWiki, Pagination pagination, boolean descending) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_RECENT_CHANGES);
-		stmt.setString(1, virtualWiki);
-		stmt.setInt(2, pagination.getNumResults());
-		stmt.setInt(3, pagination.getOffset());
-		return stmt;
+		// FIXME - sort order ignored
+		Object[] args = {
+				virtualWiki,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_RECENT_CHANGES, args, new RecentChangeMapper());
 	}
 
 	/**
@@ -965,166 +852,69 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = getTopicHistoryStatement(conn, topicId, pagination, descending, selectDeleted);
-			// FIXME - sort order ignored
-			rs = stmt.executeQuery();
-			List<RecentChange> recentChanges = new ArrayList<RecentChange>();
-			while (rs.next()) {
-				recentChanges.add(this.initRecentChange(rs));
-			}
-			return recentChanges;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getTopicHistoryStatement(Connection conn, int topicId, Pagination pagination, boolean descending, boolean selectDeleted) throws SQLException {
+		// FIXME - sort order ignored
 		// the SQL contains the syntax "is {0} null", which needs to be formatted as a message.
 		Object[] params = {""};
 		if (selectDeleted) {
 			params[0] = "not";
 		}
 		String sql = this.formatStatement(STATEMENT_SELECT_TOPIC_HISTORY, params);
-		PreparedStatement stmt = conn.prepareStatement(sql);
-		stmt.setInt(1, topicId);
-		stmt.setInt(2, pagination.getNumResults());
-		stmt.setInt(3, pagination.getOffset());
-		return stmt;
+		Object[] args = {
+				topicId,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().query(sql, args, new RecentChangeMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getTopicsAdminStatement(conn, virtualWikiId, pagination);
-			rs = stmt.executeQuery();
-			List<String> results = new ArrayList<String>();
-			while (rs.next()) {
-				results.add(rs.getString("topic_name"));
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = {
+				virtualWikiId,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_TOPICS_ADMIN, args, String.class);
 	}
 
 	/**
 	 *
 	 */
-	protected PreparedStatement getTopicsAdminStatement(Connection conn, int virtualWikiId, Pagination pagination) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_TOPICS_ADMIN);
-		stmt.setInt(1, virtualWikiId);
-		stmt.setInt(2, pagination.getNumResults());
-		stmt.setInt(3, pagination.getOffset());
-		return stmt;
-	}
-
-	/**
-	 *
-	 */
-	public Map<Object, UserBlock> getUserBlocks(Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_USER_BLOCKS);
-			stmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-			rs = stmt.executeQuery();
-			Map<Object, UserBlock> userBlocks = new LinkedHashMap<Object, UserBlock>();
-			while (rs.next()) {
-				UserBlock userBlock = this.initUserBlock(rs);
-				if (userBlock.getWikiUserId() != null) {
-					userBlocks.put(userBlock.getWikiUserId(), userBlock);
-				}
-				if (userBlock.getIpAddress() != null) {
-					userBlocks.put(userBlock.getIpAddress(), userBlock);
-				}
-			}
-			return userBlocks;
-		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
-		}
+	public List<UserBlock> getUserBlocks() throws SQLException {
+		Object[] args = {
+				new Timestamp(System.currentTimeMillis())
+		};
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_USER_BLOCKS, args, new UserBlockMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getUserContributionsByLoginStatement(conn, virtualWiki, login, pagination, descending);
-			// FIXME - sort order ignored
-			rs = stmt.executeQuery();
-			List<RecentChange> recentChanges = new ArrayList<RecentChange>();
-			while (rs.next()) {
-				recentChanges.add(this.initRecentChange(rs));
-			}
-			return recentChanges;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getUserContributionsByLoginStatement(Connection conn, String virtualWiki, String login, Pagination pagination, boolean descending) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER_CHANGES_LOGIN);
-		stmt.setString(1, virtualWiki);
-		stmt.setString(2, login);
-		stmt.setInt(3, pagination.getNumResults());
-		stmt.setInt(4, pagination.getOffset());
-		return stmt;
+		// FIXME - sort order ignored
+		Object[] args = {
+				virtualWiki,
+				login,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_WIKI_USER_CHANGES_LOGIN, args, new RecentChangeMapper());
 	}
 
 	/**
 	 *
 	 */
 	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getUserContributionsByUserDisplayStatement(conn, virtualWiki, userDisplay, pagination, descending);
-			// FIXME - sort order ignored
-			rs = stmt.executeQuery();
-			List<RecentChange> recentChanges = new ArrayList<RecentChange>();
-			while (rs.next()) {
-				recentChanges.add(this.initRecentChange(rs));
-			}
-			return recentChanges;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getUserContributionsByUserDisplayStatement(Connection conn, String virtualWiki, String userDisplay, Pagination pagination, boolean descending) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER_CHANGES_ANONYMOUS);
-		stmt.setString(1, virtualWiki);
-		stmt.setString(2, userDisplay);
-		stmt.setInt(3, pagination.getNumResults());
-		stmt.setInt(4, pagination.getOffset());
-		return stmt;
+		// FIXME - sort order ignored
+		Object[] args = {
+				virtualWiki,
+				userDisplay,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_WIKI_USER_CHANGES_ANONYMOUS, args, new RecentChangeMapper());
 	}
 
 	/**
@@ -1146,33 +936,13 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.getWatchlistStatement(conn, virtualWikiId, userId, pagination);
-			rs = stmt.executeQuery();
-			List<RecentChange> recentChanges = new ArrayList<RecentChange>();
-			while (rs.next()) {
-				recentChanges.add(this.initRecentChange(rs));
-			}
-			return recentChanges;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
-	}
-
-	/**
-	 *
-	 */
-	protected PreparedStatement getWatchlistStatement(Connection conn, int virtualWikiId, int userId, Pagination pagination) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_WATCHLIST_CHANGES);
-		stmt.setInt(1, virtualWikiId);
-		stmt.setInt(2, userId);
-		stmt.setInt(3, pagination.getNumResults());
-		stmt.setInt(4, pagination.getOffset());
-		return stmt;
+		Object[] args = {
+				virtualWikiId,
+				userId,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		};
+		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_WATCHLIST_CHANGES, args, new RecentChangeMapper());
 	}
 
 	/**
@@ -1391,75 +1161,6 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 *
-	 */
-	public LogItem initLogItem(ResultSet rs, String virtualWikiName) throws SQLException {
-		LogItem logItem = new LogItem();
-		int userId = rs.getInt("wiki_user_id");
-		if (userId > 0) {
-			logItem.setUserId(userId);
-		}
-		logItem.setUserDisplayName(rs.getString("display_name"));
-		int topicId = rs.getInt("topic_id");
-		if (topicId > 0) {
-			logItem.setTopicId(topicId);
-		}
-		int topicVersionId = rs.getInt("topic_version_id");
-		if (topicVersionId > 0) {
-			logItem.setTopicVersionId(topicVersionId);
-		}
-		logItem.setLogDate(rs.getTimestamp("log_date"));
-		logItem.setLogComment(rs.getString("log_comment"));
-		logItem.setLogParamString(rs.getString("log_params"));
-		logItem.setLogType(rs.getInt("log_type"));
-		logItem.setLogSubType(rs.getInt("log_sub_type"));
-		logItem.setVirtualWiki(virtualWikiName);
-		return logItem;
-	}
-
-	/**
-	 * Initialize a recent change record from a result set.
-	 */
-	protected RecentChange initRecentChange(ResultSet rs) throws SQLException {
-		RecentChange change = new RecentChange();
-		int topicVersionId = rs.getInt("topic_version_id");
-		if (topicVersionId > 0) {
-			change.setTopicVersionId(topicVersionId);
-		}
-		int previousTopicVersionId = rs.getInt("previous_topic_version_id");
-		if (previousTopicVersionId > 0) {
-			change.setPreviousTopicVersionId(previousTopicVersionId);
-		}
-		int topicId = rs.getInt("topic_id");
-		if (topicId > 0) {
-			change.setTopicId(topicId);
-		}
-		change.setTopicName(rs.getString("topic_name"));
-		change.setCharactersChanged(rs.getInt("characters_changed"));
-		change.setChangeDate(rs.getTimestamp("change_date"));
-		change.setChangeComment(rs.getString("change_comment"));
-		int userId = rs.getInt("wiki_user_id");
-		if (userId > 0) {
-			change.setAuthorId(userId);
-		}
-		change.setAuthorName(rs.getString("display_name"));
-		int editType = rs.getInt("edit_type");
-		if (editType > 0) {
-			change.setEditType(editType);
-			change.initChangeWikiMessageForVersion(editType, rs.getString("log_params"));
-		}
-		int logType = rs.getInt("log_type");
-		Integer logSubType = (rs.getInt("log_sub_type") <= 0) ? null : rs.getInt("log_sub_type");
-		if (logType > 0) {
-			change.setLogType(logType);
-			change.setLogSubType(logSubType);
-			change.initChangeWikiMessageForLog(rs.getString("virtual_wiki_name"), logType, logSubType, rs.getString("log_params"), change.getTopicVersionId());
-		}
-		change.setVirtualWiki(rs.getString("virtual_wiki_name"));
-		return change;
-	}
-
-	/**
 	 * Initialize the topic record.
 	 *
 	 * @param rs The result set being used to initialize the record.
@@ -1499,117 +1200,41 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	private TopicVersion initTopicVersion(ResultSet rs) throws SQLException {
-		TopicVersion topicVersion = new TopicVersion();
-		topicVersion.setTopicVersionId(rs.getInt("topic_version_id"));
-		topicVersion.setTopicId(rs.getInt("topic_id"));
-		topicVersion.setEditComment(rs.getString("edit_comment"));
-		topicVersion.setVersionContent(rs.getString("version_content"));
-		// FIXME - Oracle cannot store an empty string - it converts them
-		// to null - so add a hack to work around the problem.
-		if (topicVersion.getVersionContent() == null) {
-			topicVersion.setVersionContent("");
-		}
-		int previousTopicVersionId = rs.getInt("previous_topic_version_id");
-		if (previousTopicVersionId > 0) {
-			topicVersion.setPreviousTopicVersionId(previousTopicVersionId);
-		}
-		int userId = rs.getInt("wiki_user_id");
-		if (userId > 0) {
-			topicVersion.setAuthorId(userId);
-		}
-		topicVersion.setCharactersChanged(rs.getInt("characters_changed"));
-		topicVersion.setVersionParamString(rs.getString("version_params"));
-		topicVersion.setEditDate(rs.getTimestamp("edit_date"));
-		topicVersion.setEditType(rs.getInt("edit_type"));
-		topicVersion.setAuthorDisplay(rs.getString("wiki_user_display"));
-		return topicVersion;
-	}
-
-	/**
-	 *
-	 */
-	private UserBlock initUserBlock(ResultSet rs) throws SQLException {
-		Integer wikiUserId = (rs.getInt("wiki_user_id") > 0) ? rs.getInt("wiki_user_id") : null;
-		String ipAddress = rs.getString("ip_address");
-		Timestamp blockEndDate = rs.getTimestamp("block_end_date");
-		int blockedByUserId = rs.getInt("blocked_by_user_id");
-		UserBlock userBlock = new UserBlock(wikiUserId, ipAddress, blockEndDate, blockedByUserId);
-		userBlock.setBlockId(rs.getInt("user_block_id"));
-		userBlock.setBlockDate(rs.getTimestamp("block_date"));
-		userBlock.setBlockReason(rs.getString("block_reason"));
-		userBlock.setUnblockDate(rs.getTimestamp("unblock_date"));
-		userBlock.setUnblockReason(rs.getString("unblock_reason"));
-		int unblockedByUserId = rs.getInt("unblocked_by_user_id");
-		if (unblockedByUserId > 0) {
-			userBlock.setUnblockedByUserId(unblockedByUserId);
-		}
-		return userBlock;
-	}
-
-	/**
-	 *
-	 */
-	private WikiUser initWikiUser(ResultSet rs) throws SQLException {
-		String username = rs.getString("login");
-		WikiUser user = new WikiUser(username);
-		user.setDisplayName(rs.getString("display_name"));
-		user.setUserId(rs.getInt("wiki_user_id"));
-		user.setCreateDate(rs.getTimestamp("create_date"));
-		user.setLastLoginDate(rs.getTimestamp("last_login_date"));
-		user.setCreateIpAddress(rs.getString("create_ip_address"));
-		user.setLastLoginIpAddress(rs.getString("last_login_ip_address"));
-		user.setEmail(rs.getString("email"));
-		return user;
-	}
-
-	/**
-	 *
-	 */
-	public void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId, Connection conn) throws SQLException {
+	public void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId) throws SQLException {
 		if (topicId == -1) {
 			throw new SQLException("Invalid topicId passed to method AnsiQueryHandler.insertCategories");
 		}
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_CATEGORY);
-			for (Category category : categoryList) {
-				stmt.setInt(1, topicId);
-				stmt.setString(2, category.getName());
-				stmt.setString(3, category.getSortKey());
-				stmt.addBatch();
-			}
-			stmt.executeBatch();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (Category category : categoryList) {
+			Object[] args = { topicId, category.getName(), category.getSortKey() };
+			batchArgs.add(args);
 		}
+		DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_CATEGORY, batchArgs);
 	}
 
 	/**
 	 *
 	 */
-	public void insertGroupAuthority(int groupId, String authority, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_AUTHORITY);
-			stmt.setInt(1, groupId);
-			stmt.setString(2, authority);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertGroupAuthority(int groupId, String authority) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_GROUP_AUTHORITY,
+				groupId,
+				authority
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertGroupMember(String username, int groupId, Connection conn) throws SQLException {
+	public void insertGroupMember(String username, int groupId) throws SQLException {
 		PreparedStatement stmt = null;
+		Connection conn = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_MEMBER);
-				int groupMemberId = this.nextGroupMemberId(conn);
+				int groupMemberId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_MEMBERS_SEQUENCE);
 				stmt.setInt(index++, groupMemberId);
 			} else {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_MEMBER_AUTO_INCREMENT);
@@ -1618,152 +1243,90 @@ public class AnsiQueryHandler implements QueryHandler {
 			stmt.setInt(index++, groupId);
 			stmt.executeUpdate();
 		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.closeConnection(conn, stmt);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertInterwiki(Interwiki interwiki, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_INTERWIKI);
-			stmt.setString(1, interwiki.getInterwikiPrefix());
-			stmt.setString(2, interwiki.getInterwikiPattern());
-			stmt.setString(3, interwiki.getInterwikiDisplay());
-			stmt.setInt(4, interwiki.getInterwikiType());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertInterwiki(Interwiki interwiki) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_INTERWIKI,
+				interwiki.getInterwikiPrefix(),
+				interwiki.getInterwikiPattern(),
+				interwiki.getInterwikiDisplay(),
+				interwiki.getInterwikiType()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertLogItem(LogItem logItem, int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEM);
-			stmt.setTimestamp(1, logItem.getLogDate());
-			stmt.setInt(2, virtualWikiId);
-			if (logItem.getUserId() == null) {
-				stmt.setNull(3, Types.INTEGER);
-			} else {
-				stmt.setInt(3, logItem.getUserId());
-			}
-			stmt.setString(4, logItem.getUserDisplayName());
-			stmt.setInt(5, logItem.getLogType());
-			if (logItem.getLogSubType() == null) {
-				stmt.setNull(6, Types.INTEGER);
-			} else {
-				stmt.setInt(6, logItem.getLogSubType());
-			}
-			stmt.setString(7, logItem.getLogComment());
-			stmt.setString(8, logItem.getLogParamString());
-			if (logItem.getTopicId() == null) {
-				stmt.setNull(9, Types.INTEGER);
-			} else {
-				stmt.setInt(9, logItem.getTopicId());
-			}
-			if (logItem.getTopicVersionId() == null) {
-				stmt.setNull(10, Types.INTEGER);
-			} else {
-				stmt.setInt(10, logItem.getTopicVersionId());
-			}
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertLogItem(LogItem logItem, int virtualWikiId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEM,
+				logItem.getLogDate(),
+				virtualWikiId,
+				logItem.getUserId(),
+				logItem.getUserDisplayName(),
+				logItem.getLogType(),
+				logItem.getLogSubType(),
+				logItem.getLogComment(),
+				logItem.getLogParamString(),
+				logItem.getTopicId(),
+				logItem.getTopicVersionId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertRecentChange(RecentChange change, int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_RECENT_CHANGE);
-			if (change.getTopicVersionId() == null) {
-				stmt.setNull(1, Types.INTEGER);
-			} else {
-				stmt.setInt(1, change.getTopicVersionId());
-			}
-			if (change.getPreviousTopicVersionId() == null) {
-				stmt.setNull(2, Types.INTEGER);
-			} else {
-				stmt.setInt(2, change.getPreviousTopicVersionId());
-			}
-			if (change.getTopicId() == null) {
-				stmt.setNull(3, Types.INTEGER);
-			} else {
-				stmt.setInt(3, change.getTopicId());
-			}
-			stmt.setString(4, change.getTopicName());
-			stmt.setTimestamp(5, change.getChangeDate());
-			stmt.setString(6, change.getChangeComment());
-			if (change.getAuthorId() == null) {
-				stmt.setNull(7, Types.INTEGER);
-			} else {
-				stmt.setInt(7, change.getAuthorId());
-			}
-			stmt.setString(8, change.getAuthorName());
-			if (change.getEditType() == null) {
-				stmt.setNull(9, Types.INTEGER);
-			} else {
-				stmt.setInt(9, change.getEditType());
-			}
-			stmt.setInt(10, virtualWikiId);
-			stmt.setString(11, change.getVirtualWiki());
-			if (change.getCharactersChanged() == null) {
-				stmt.setNull(12, Types.INTEGER);
-			} else {
-				stmt.setInt(12, change.getCharactersChanged());
-			}
-			if (change.getLogType() == null) {
-				stmt.setNull(13, Types.INTEGER);
-			} else {
-				stmt.setInt(13, change.getLogType());
-			}
-			if (change.getLogSubType() == null) {
-				stmt.setNull(14, Types.INTEGER);
-			} else {
-				stmt.setInt(14, change.getLogSubType());
-			}
-			stmt.setString(15, change.getParamString());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertRecentChange(RecentChange change, int virtualWikiId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_RECENT_CHANGE,
+				change.getTopicVersionId(),
+				change.getPreviousTopicVersionId(),
+				change.getTopicId(),
+				change.getTopicName(),
+				change.getChangeDate(),
+				change.getChangeComment(),
+				change.getAuthorId(),
+				change.getAuthorName(),
+				change.getEditType(),
+				virtualWikiId,
+				change.getVirtualWiki(),
+				change.getCharactersChanged(),
+				change.getLogType(),
+				change.getLogSubType(),
+				change.getParamString()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertRole(Role role, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_ROLE);
-			stmt.setString(1, role.getAuthority());
-			stmt.setString(2, role.getDescription());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertRole(Role role) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_ROLE,
+				role.getAuthority(),
+				role.getDescription()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertTopic(Topic topic, int virtualWikiId, Connection conn) throws SQLException {
+	public void insertTopic(Topic topic, int virtualWikiId) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC);
-				int topicId = this.nextTopicId(conn);
+				int topicId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_SEQUENCE);
 				topic.setTopicId(topicId);
 				stmt.setInt(index++, topic.getTopicId());
 			} else {
@@ -1793,41 +1356,35 @@ public class AnsiQueryHandler implements QueryHandler {
 				topic.setTopicId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertTopicLinks(List<Topic> topicLinks, int topicId, Connection conn) throws SQLException {
+	public void insertTopicLinks(List<Topic> topicLinks, int topicId) throws SQLException {
 		if (topicId == -1) {
 			throw new SQLException("Invalid topicId passed to method AnsiQueryHandler.insertTopicLinks");
 		}
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_LINKS);
-			for (Topic topicLink : topicLinks) {
-				stmt.setInt(1, topicId);
-				stmt.setInt(2, topicLink.getNamespace().getId());
-				stmt.setString(3, topicLink.getPageName());
-				stmt.addBatch();
-			}
-			stmt.executeBatch();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (Topic topicLink : topicLinks) {
+			Object[] args = { topicId, topicLink.getNamespace().getId(), topicLink.getPageName() };
+			batchArgs.add(args);
 		}
+		DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_TOPIC_LINKS, batchArgs);
 	}
 
 	/**
 	 *
 	 */
-	public void insertTopicVersions(List<TopicVersion> topicVersions, Connection conn) throws SQLException {
+	public void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		boolean useBatch = (topicVersions.size() > 1);
 		try {
+			conn = DatabaseConnection.getConnection();
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION);
 			} else if (useBatch) {
@@ -1840,7 +1397,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			if (!this.autoIncrementPrimaryKeys() || useBatch) {
 				// manually retrieve next topic version id when using batch
 				// mode or when the database doesn't support generated keys.
-				topicVersionId = this.nextTopicVersionId(conn);
+				topicVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE);
 			}
 			for (TopicVersion topicVersion : topicVersions) {
 				if (!this.autoIncrementPrimaryKeys() || useBatch) {
@@ -1868,39 +1425,34 @@ public class AnsiQueryHandler implements QueryHandler {
 				stmt.executeBatch();
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
-			stmt = null;
-			rs = null;
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertUserAuthority(String username, String authority, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_AUTHORITY);
-			stmt.setString(1, username);
-			stmt.setString(2, authority);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertUserAuthority(String username, String authority) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_AUTHORITY,
+				username,
+				authority
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertUserBlock(UserBlock userBlock, Connection conn) throws SQLException {
+	public void insertUserBlock(UserBlock userBlock) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_USER_BLOCK);
-				int blockId = this.nextUserBlockId(conn);
+				int blockId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_USER_BLOCK_SEQUENCE);
 				userBlock.setBlockId(blockId);
 				stmt.setInt(index++, userBlock.getBlockId());
 			} else {
@@ -1932,37 +1484,34 @@ public class AnsiQueryHandler implements QueryHandler {
 				userBlock.setBlockId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertUserDetails(WikiUserDetails userDetails, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_USER);
-			stmt.setString(1, userDetails.getUsername());
-			stmt.setString(2, userDetails.getPassword());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertUserDetails(WikiUserDetails userDetails) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_USER,
+				userDetails.getUsername(),
+				userDetails.getPassword()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertVirtualWiki(VirtualWiki virtualWiki, Connection conn) throws SQLException {
+	public void insertVirtualWiki(VirtualWiki virtualWiki) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_VIRTUAL_WIKI);
-				int virtualWikiId = this.nextVirtualWikiId(conn);
+				int virtualWikiId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_VIRTUAL_WIKI_SEQUENCE);
 				virtualWiki.setVirtualWikiId(virtualWikiId);
 				stmt.setInt(index++, virtualWiki.getVirtualWikiId());
 			} else {
@@ -1982,38 +1531,35 @@ public class AnsiQueryHandler implements QueryHandler {
 				virtualWiki.setVirtualWikiId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertWatchlistEntry(int virtualWikiId, String topicName, int userId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_WATCHLIST_ENTRY);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setString(2, topicName);
-			stmt.setInt(3, userId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_WATCHLIST_ENTRY,
+				virtualWikiId,
+				topicName,
+				userId
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void insertWikiFile(WikiFile wikiFile, int virtualWikiId, Connection conn) throws SQLException {
+	public void insertWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE);
-				int fileId = this.nextWikiFileId(conn);
+				int fileId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_SEQUENCE);
 				wikiFile.setFileId(fileId);
 				stmt.setInt(index++, wikiFile.getFileId());
 			} else {
@@ -2037,22 +1583,23 @@ public class AnsiQueryHandler implements QueryHandler {
 				wikiFile.setFileId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertWikiFileVersion(WikiFileVersion wikiFileVersion, Connection conn) throws SQLException {
+	public void insertWikiFileVersion(WikiFileVersion wikiFileVersion) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE_VERSION);
-				int fileVersionId = this.nextWikiFileVersionId(conn);
+				int fileVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_VERSION_SEQUENCE);
 				wikiFileVersion.setFileVersionId(fileVersionId);
 				stmt.setInt(index++, wikiFileVersion.getFileVersionId());
 			} else {
@@ -2083,22 +1630,23 @@ public class AnsiQueryHandler implements QueryHandler {
 				wikiFileVersion.setFileVersionId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertWikiGroup(WikiGroup group, Connection conn) throws SQLException {
+	public void insertWikiGroup(WikiGroup group) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) { // && group.getGroupId()>0) {
+			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP);
-				int groupId = this.nextWikiGroupId(conn);
+				int groupId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_SEQUENCE);
 				group.setGroupId(groupId);
 				stmt.setInt(index++, group.getGroupId());
 			} else {
@@ -2115,22 +1663,23 @@ public class AnsiQueryHandler implements QueryHandler {
 				group.setGroupId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertWikiUser(WikiUser user, Connection conn) throws SQLException {
+	public void insertWikiUser(WikiUser user) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			int index = 1;
 			if (!this.autoIncrementPrimaryKeys()) {
 				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_USER);
-				int nextUserId = this.nextWikiUserId(conn);
+				int nextUserId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_USER_SEQUENCE);
 				user.setUserId(nextUserId);
 				stmt.setInt(index++, user.getUserId());
 			} else {
@@ -2152,47 +1701,44 @@ public class AnsiQueryHandler implements QueryHandler {
 				user.setUserId(rs.getInt(1));
 			}
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
-		}
-		// Store user preferences
-		Map<String, String> defaults = this.lookupUserPreferencesDefaults(conn);
-		Map<String, String> preferences = user.getPreferences();
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_USER_PREFERENCE);
-			// Only store preferences that are not default
-			for (String key : defaults.keySet()) {
-				String defVal = defaults.get(key);
-				String cusVal = preferences.get(key);
-				if (StringUtils.isBlank(cusVal)) {
-					user.setPreference(key, defVal);
-				} else if (StringUtils.isBlank(defVal) || !defaults.get(key).equals(preferences.get(key))) {
-					stmt.setInt(1, user.getUserId());
-					stmt.setString(2, key);
-					stmt.setString(3, cusVal);
-					stmt.executeUpdate();
-				}
-			}
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_USER_PREFERENCE_DEFAULTS);
-			stmt.setString(1, userPreferenceKey);
-			stmt.setString(2, userPreferenceDefaultValue);
-			stmt.setString(3, userPreferenceGroupKey);
-			stmt.setInt(4, sequenceNr);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+	public void insertWikiUserPreferences(WikiUser user, Map<String, String> preferenceDefaults) throws SQLException {
+		// Store user preferences
+		Map<String, String> preferences = user.getPreferences();
+		// Only store preferences that are not default
+		for (String key : preferenceDefaults.keySet()) {
+			String defVal = preferenceDefaults.get(key);
+			String cusVal = preferences.get(key);
+			if (StringUtils.isBlank(cusVal)) {
+				user.setPreference(key, defVal);
+			} else if (StringUtils.isBlank(defVal) || !preferenceDefaults.get(key).equals(preferences.get(key))) {
+				DatabaseConnection.getJdbcTemplate().update(
+						STATEMENT_INSERT_USER_PREFERENCE,
+						user.getUserId(),
+						key,
+						cusVal
+				);
+			}
 		}
+	}
+
+	/**
+	 *
+	 */
+	public void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_USER_PREFERENCE_DEFAULTS,
+				userPreferenceKey,
+				userPreferenceDefaultValue,
+				userPreferenceGroupKey,
+				sequenceNr
+		);
 	}
 
 	/**
@@ -2239,11 +1785,13 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Namespace> lookupNamespaces(Connection conn) throws SQLException {
+	public List<Namespace> lookupNamespaces() throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		Map<Integer, Namespace> namespaces = new TreeMap<Integer, Namespace>();
 		try {
+			conn = DatabaseConnection.getConnection();
 			stmt = conn.prepareStatement(STATEMENT_SELECT_NAMESPACES);
 			rs = stmt.executeQuery();
 			// because there is no consistent way to sort null keys, get all data and then
@@ -2278,7 +1826,7 @@ public class AnsiQueryHandler implements QueryHandler {
 				namespaces.put(talkNamespace.getId(), talkNamespace);
 			}
 		} finally {
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 		return new ArrayList<Namespace>(namespaces.values());
 	}
@@ -2286,20 +1834,18 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName, Connection conn) throws SQLException {
+	public Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName) throws SQLException {
 		if (namespace.getId().equals(Namespace.SPECIAL_ID)) {
 			// invalid namespace
 			return null;
 		}
-		boolean closeConnection = (conn == null);
+		Connection conn = null;
 		PreparedStatement stmt1 = null;
 		PreparedStatement stmt2 = null;
 		ResultSet rs = null;
 		Topic topic = null;
 		try {
-			if (conn == null) {
-				conn = DatabaseConnection.getConnection();
-			}
+			conn = DatabaseConnection.getConnection();
 			stmt1 = conn.prepareStatement(STATEMENT_SELECT_TOPIC);
 			stmt1.setString(1, pageName);
 			stmt1.setInt(2, virtualWikiId);
@@ -2317,56 +1863,23 @@ public class AnsiQueryHandler implements QueryHandler {
 			return topic;
 		} finally {
 			DatabaseConnection.closeStatement(stmt1);
-			if (closeConnection) {
-				DatabaseConnection.closeConnection(conn, stmt2, rs);
-			} else {
-				// close only the statement and result set - leave the connection open for further use
-				DatabaseConnection.closeConnection(null, stmt2, rs);
-			}
+			DatabaseConnection.closeConnection(conn, stmt2, rs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public Topic lookupTopicById(int topicId, Connection conn) throws SQLException {
-		boolean closeConnection = (conn == null);
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			if (conn == null) {
-				conn = DatabaseConnection.getConnection();
-			}
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_BY_ID);
-			stmt.setInt(1, topicId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initTopic(rs) : null;
-		} finally {
-			if (closeConnection) {
-				DatabaseConnection.closeConnection(conn, stmt, rs);
-			} else {
-				// close only the statement and result set - leave the connection open for further use
-				DatabaseConnection.closeConnection(null, stmt, rs);
-			}
-		}
-	}
-
-	/**
-	 *
-	 */
-	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
+	public Topic lookupTopicById(int topicId) throws SQLException {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
 			conn = DatabaseConnection.getConnection();
-			stmt = this.lookupTopicByTypeStatement(conn, virtualWikiId, topicType1, topicType2, namespaceStart, namespaceEnd, pagination);
+			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_BY_ID);
+			stmt.setInt(1, topicId);
 			rs = stmt.executeQuery();
-			Map<Integer, String> results = new LinkedHashMap<Integer, String>();
-			while (rs.next()) {
-				results.put(rs.getInt("topic_id"), rs.getString("topic_name"));
-			}
-			return results;
+			return (rs.next()) ? this.initTopic(rs) : null;
 		} finally {
 			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
@@ -2375,16 +1888,22 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	protected PreparedStatement lookupTopicByTypeStatement(Connection conn, int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_BY_TYPE);
-		stmt.setInt(1, virtualWikiId);
-		stmt.setInt(2, topicType1.id());
-		stmt.setInt(3, topicType2.id());
-		stmt.setInt(4, namespaceStart);
-		stmt.setInt(5, namespaceEnd);
-		stmt.setInt(6, pagination.getNumResults());
-		stmt.setInt(7, pagination.getOffset());
-		return stmt;
+	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_TOPIC_BY_TYPE,
+				virtualWikiId,
+				topicType1.id(),
+				topicType2.id(),
+				namespaceStart,
+				namespaceEnd,
+				pagination.getNumResults(),
+				pagination.getOffset()
+		);
+		Map<Integer, String> topicMap = new LinkedHashMap<Integer, String>();
+		for (Map<String, Object> result : results) {
+			topicMap.put((Integer)result.get("topic_id"), (String)result.get("topic_name"));
+		}
+		return topicMap;
 	}
 
 	/**
@@ -2465,10 +1984,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted, Connection conn) throws SQLException {
+	public Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_NAMES);
 			stmt.setInt(1, virtualWikiId);
 			rs = stmt.executeQuery();
@@ -2480,8 +2001,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			}
 			return results;
 		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
@@ -2489,30 +2009,12 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public TopicVersion lookupTopicVersion(int topicVersionId) throws SQLException {
-		Connection conn = null;
+		Object[] args = { topicVersionId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			return this.lookupTopicVersion(topicVersionId, conn);
-		} finally {
-			DatabaseConnection.closeConnection(conn);
-		}
-	}
-
-	/**
-	 * Private version of lookupTopicVersion that works with an existing connection
-	 * to allow lookups as part of a transaction.
-	 */
-	private TopicVersion lookupTopicVersion(int topicVersionId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_VERSION);
-			stmt.setInt(1, topicVersionId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initTopicVersion(rs) : null;
-		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_VERSION, args, new TopicVersionMapper());
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
 	}
 
@@ -2532,21 +2034,13 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	private Map<String, String> lookupUserPreferencesDefaults(Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			Map<String, String> defaults = new HashMap<String, String>();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS);
-			rs = stmt.executeQuery();
-			while (rs.next()) {
-				defaults.put(rs.getString(1), rs.getString(2));
-			}
-			return defaults;
-		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+	private Map<String, String> lookupUserPreferencesDefaults() throws SQLException {
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS);
+		Map<String, String> defaults = new HashMap<String, String>();
+		for (Map<String, Object> row : results) {
+			defaults.put((String)row.get("pref_key"), (String)row.get("pref_value"));
 		}
+		return defaults;
 	}
 
 	/**
@@ -2637,79 +2131,62 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public WikiUser lookupWikiUser(int userId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt1 = null;
-		PreparedStatement stmt2 = null;
-		ResultSet rs = null;
 		WikiUser user = null;
+		Object[] args = { userId };
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt1 = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER);
-			stmt1.setInt(1, userId);
-			rs = stmt1.executeQuery();
-			if (!rs.next()) {
-				return null;
-			}
-			user = this.initWikiUser(rs);
-			// get the default user preferences
-			Map<String, String> preferences = this.lookupUserPreferencesDefaults(conn);
-			// overwrite the defaults with any user-specific preferences
-			stmt2 = conn.prepareStatement(STATEMENT_SELECT_USER_PREFERENCES);
-			stmt2.setInt(1, userId);
-			rs = stmt2.executeQuery();
-			while (rs.next()) {
-				preferences.put(rs.getString(1), rs.getString(2));
-			}
-			user.setPreferences(preferences);
-			return user;
-		} finally {
-			DatabaseConnection.closeStatement(stmt1);
-			DatabaseConnection.closeConnection(conn, stmt2, rs);
+			user = DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_USER, args, new WikiUserMapper());
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return null;
 		}
+		// get the default user preferences
+		Map<String, String> preferences = this.lookupUserPreferencesDefaults();
+		// overwrite the defaults with any user-specific preferences
+		List<Map<String,Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_USER_PREFERENCES,
+				userId
+		);
+		for (Map<String, Object> result : results) {
+			preferences.put((String)result.get("pref_key"), (String)result.get("pref_value"));
+		}
+		user.setPreferences(preferences);
+		return user;
 	}
 	
 	/**
 	 *
 	 */
-	public int lookupWikiUser(String username, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+	public int lookupWikiUser(String username) throws SQLException {
 		try {
-			stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USER_LOGIN);
-			stmt.setString(1, username);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? rs.getInt("wiki_user_id") : -1;
-		} finally {
-			// close only the statement and result set - leave the connection open for further use
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			return DatabaseConnection.getJdbcTemplate().queryForObject(
+					STATEMENT_SELECT_WIKI_USER_LOGIN,
+					Integer.class,
+					username
+			);
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+			return -1;
 		}
 	}
 
 	public WikiUser lookupPwResetChallengeData(String username) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		WikiUser user = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			user = lookupWikiUser(lookupWikiUser(username, conn));
-			if(user == null) {
-				return null;
-			}
-			stmt = conn.prepareStatement(STATEMENT_SELECT_PW_RESET_CHALLENGE_DATA);
-			stmt.setString(1, user.getUsername());
-			rs = stmt.executeQuery();
-			if(rs.next()) {
-				if(rs != null)
-				user.setChallengeValue(rs.getString("challenge_value"));
-				user.setChallengeDate(rs.getTimestamp("challenge_date"));
-				user.setChallengeIp(rs.getString("challenge_ip"));
-				user.setChallengeTries(rs.getInt("challenge_tries"));
-			}
-			return user;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		WikiUser user = this.lookupWikiUser(this.lookupWikiUser(username));
+		if (user == null) {
+			return null;
 		}
+		try {
+			Map<String,Object> result = DatabaseConnection.getJdbcTemplate().queryForMap(
+					STATEMENT_SELECT_PW_RESET_CHALLENGE_DATA,
+					user.getUsername()
+			);
+			user.setChallengeValue((String)result.get("challenge_value"));
+			user.setChallengeDate((Timestamp)result.get("challenge_date"));
+			user.setChallengeIp((String)result.get("challenge_ip"));
+			user.setChallengeTries((Integer)result.get("challenge_tries"));
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no matching result
+		}
+		return user;
 	}
 	
 	/**
@@ -2741,303 +2218,101 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<String> lookupWikiUsers(Pagination pagination) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = this.lookupWikiUsersStatement(conn, pagination);
-			rs = stmt.executeQuery();
-			List<String> results = new ArrayList<String>();
-			while (rs.next()) {
-				results.add(rs.getString("login"));
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
-		}
+		Object[] args = { pagination.getNumResults(), pagination.getOffset() };
+		return DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_WIKI_USERS,
+				args,
+				String.class
+		);
 	}
 
 	/**
 	 *
 	 */
-	protected PreparedStatement lookupWikiUsersStatement(Connection conn, Pagination pagination) throws SQLException {
-		PreparedStatement stmt = conn.prepareStatement(STATEMENT_SELECT_WIKI_USERS);
-		stmt.setInt(1, pagination.getNumResults());
-		stmt.setInt(2, pagination.getOffset());
-		return stmt;
-	}
-
-	/**
-	 * Retrieve the next available group member id from the group members table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available group member id from the group members table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextGroupMemberId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_MEMBERS_SEQUENCE, "id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available topic id from the topic table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available topic id from the topic table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextTopicId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_SEQUENCE, "topic_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available topic version id from the topic version table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available topic version id from the topic version table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	public int nextTopicVersionId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE, "topic_version_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available user block id from the user block table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available user block id from the user block table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextUserBlockId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_USER_BLOCK_SEQUENCE, "user_block_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available virtual wiki id from the virtual wiki table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available virtual wiki id from the virtual wiki table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextVirtualWikiId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_VIRTUAL_WIKI_SEQUENCE, "virtual_wiki_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available wiki file id from the wiki file table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available wiki file id from the wiki file table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextWikiFileId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_SEQUENCE, "file_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available wiki file version id from the wiki file
-	 * version table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available wiki file version id from the wiki file
-	 *  version table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextWikiFileVersionId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_VERSION_SEQUENCE, "file_version_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available wiki group id from the wiki group table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available wiki group id from the wiki group table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextWikiGroupId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_SEQUENCE, "group_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 * Retrieve the next available wiki user id from the wiki user table.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @return The next available wiki user id from the wiki user table.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	private int nextWikiUserId(Connection conn) throws SQLException {
-		int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_USER_SEQUENCE, "wiki_user_id", conn);
-		// note - this returns the last id in the system, so add one
-		return nextId + 1;
-	}
-
-	/**
-	 *
-	 */
-	public void reloadLogItems(int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_LOG_ITEMS);
-			stmt.setInt(1, virtualWikiId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE);
-			stmt.setInt(1, LogItem.LOG_TYPE_DELETE);
-			stmt.setString(2, "");
-			stmt.setInt(3, virtualWikiId);
-			stmt.setInt(4, TopicVersion.EDIT_DELETE);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE);
-			stmt.setInt(1, LogItem.LOG_TYPE_DELETE);
-			stmt.setString(2, "|" + TopicVersion.EDIT_UNDELETE);
-			stmt.setInt(3, virtualWikiId);
-			stmt.setInt(4, TopicVersion.EDIT_UNDELETE);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE);
-			stmt.setInt(1, LogItem.LOG_TYPE_PERMISSION);
-			stmt.setString(2, "");
-			stmt.setInt(3, virtualWikiId);
-			stmt.setInt(4, TopicVersion.EDIT_PERMISSION);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_IMPORT);
-			stmt.setInt(1, LogItem.LOG_TYPE_IMPORT);
-			stmt.setInt(2, TopicVersion.EDIT_IMPORT);
-			stmt.setInt(3, virtualWikiId);
-			stmt.setInt(4, TopicVersion.EDIT_IMPORT);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_MOVE);
-			stmt.setInt(1, LogItem.LOG_TYPE_MOVE);
-			stmt.setInt(2, virtualWikiId);
-			stmt.setInt(3, TopicVersion.EDIT_MOVE);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_UPLOAD);
-			stmt.setInt(1, LogItem.LOG_TYPE_UPLOAD);
-			stmt.setInt(2, virtualWikiId);
-			stmt.setInt(3, TopicVersion.EDIT_NORMAL);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_USER);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, LogItem.LOG_TYPE_USER_CREATION);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_BLOCK);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, LogItem.LOG_TYPE_BLOCK);
-			stmt.setInt(3, LogItem.LOG_SUBTYPE_BLOCK_BLOCK);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_LOG_ITEMS_UNBLOCK);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, LogItem.LOG_TYPE_BLOCK);
-			stmt.setInt(3, LogItem.LOG_SUBTYPE_BLOCK_UNBLOCK);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void reloadLogItems(int virtualWikiId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_LOG_ITEMS,
+				virtualWikiId
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE,
+				LogItem.LOG_TYPE_DELETE,
+				"",
+				virtualWikiId,
+				TopicVersion.EDIT_DELETE
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE,
+				LogItem.LOG_TYPE_DELETE,
+				"|" + TopicVersion.EDIT_UNDELETE,
+				virtualWikiId,
+				TopicVersion.EDIT_UNDELETE
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_BY_TOPIC_VERSION_TYPE,
+				LogItem.LOG_TYPE_PERMISSION,
+				"",
+				virtualWikiId,
+				TopicVersion.EDIT_PERMISSION
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_IMPORT,
+				LogItem.LOG_TYPE_IMPORT,
+				TopicVersion.EDIT_IMPORT,
+				virtualWikiId,
+				TopicVersion.EDIT_IMPORT
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_MOVE,
+				LogItem.LOG_TYPE_MOVE,
+				virtualWikiId,
+				TopicVersion.EDIT_MOVE
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_UPLOAD,
+				LogItem.LOG_TYPE_UPLOAD,
+				virtualWikiId,
+				TopicVersion.EDIT_NORMAL
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_USER,
+				virtualWikiId,
+				LogItem.LOG_TYPE_USER_CREATION
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_BLOCK,
+				virtualWikiId,
+				LogItem.LOG_TYPE_BLOCK,
+				LogItem.LOG_SUBTYPE_BLOCK_BLOCK
+		);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_LOG_ITEMS_UNBLOCK,
+				virtualWikiId,
+				LogItem.LOG_TYPE_BLOCK,
+				LogItem.LOG_SUBTYPE_BLOCK_UNBLOCK
+		);
 	}
 
 	/**
 	 *
 	 */
 	public void orderTopicVersions(Topic topic, int virtualWikiId, List<Integer> topicVersionIdList) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			conn.setAutoCommit(false);
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_TOPIC_VERSION_PREVIOUS_VERSION_ID);
-			Integer previousTopicVersionId = null;
-			boolean hasBatchData = false;
-			for (int topicVersionId : topicVersionIdList) {
-				if (previousTopicVersionId != null) {
-					stmt.setInt(1, previousTopicVersionId);
-					stmt.setInt(2, topicVersionId);
-					stmt.addBatch();
-					hasBatchData = true;
-				}
-				previousTopicVersionId = topicVersionId;
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		Integer previousTopicVersionId = null;
+		for (int topicVersionId : topicVersionIdList) {
+			if (previousTopicVersionId != null) {
+				Object[] args = { previousTopicVersionId, topicVersionId };
+				batchArgs.add(args);
 			}
-			if (hasBatchData) {
-				stmt.executeBatch();
-			}
-			TopicVersion topicVersion = this.lookupTopicVersion(previousTopicVersionId, conn);
-			topic.setCurrentVersionId(previousTopicVersionId);
-			topic.setTopicContent(topicVersion.getVersionContent());
-			this.updateTopic(topic, virtualWikiId, conn);
-			conn.commit();
-		} catch (SQLException e) {
-			if (conn != null) {
-				try {
-					conn.rollback();
-				} catch (Exception ex) {}
-			}
-			throw e;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
-			// explicitly null the variable to improve garbage collection.
-			// with very large loops this can help avoid OOM "GC overhead
-			// limit exceeded" errors.
-			stmt = null;
-			conn = null;
+			previousTopicVersionId = topicVersionId;
 		}
+		if (!batchArgs.isEmpty()) {
+			DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_UPDATE_TOPIC_VERSION_PREVIOUS_VERSION_ID, batchArgs);
+		}
+		TopicVersion topicVersion = this.lookupTopicVersion(previousTopicVersionId);
+		topic.setCurrentVersionId(previousTopicVersionId);
+		topic.setTopicContent(topicVersion.getVersionContent());
+		this.updateTopic(topic, virtualWikiId);
 	}
 
 	/**
@@ -3074,64 +2349,53 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void reloadRecentChanges(Connection conn, int limit) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			DatabaseConnection.executeUpdate(STATEMENT_DELETE_RECENT_CHANGES, conn);
-			stmt = conn.prepareStatement(STATEMENT_INSERT_RECENT_CHANGES_VERSIONS);
-			stmt.setInt(1, limit);
-			stmt.executeUpdate();
-			DatabaseConnection.executeUpdate(STATEMENT_INSERT_RECENT_CHANGES_LOGS, conn);
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void reloadRecentChanges(int limit) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(STATEMENT_DELETE_RECENT_CHANGES);
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_RECENT_CHANGES_VERSIONS,
+				limit
+		);
+		DatabaseConnection.getJdbcTemplate().update(STATEMENT_INSERT_RECENT_CHANGES_LOGS);
 	}
 
 	/**
 	 *
 	 */
-	public void updateConfiguration(Map<String, String> configuration, Connection conn) throws SQLException {
-		Statement stmt = null;
-		PreparedStatement pstmt = null;
-		try {
-			stmt = conn.createStatement();
-			stmt.executeUpdate(STATEMENT_DELETE_CONFIGURATION);
-			pstmt = conn.prepareStatement(STATEMENT_INSERT_CONFIGURATION);
-			for (Map.Entry<String, String> entry : configuration.entrySet()) {
-				pstmt.setString(1, entry.getKey());
-				// FIXME - Oracle cannot store an empty string - it converts them
-				// to null - so add a hack to work around the problem.
-				String value = entry.getValue();
-				if (StringUtils.isBlank(value)) {
-					value = " ";
-				}
-				pstmt.setString(2, value);
-				pstmt.addBatch();
+	public void updateConfiguration(Map<String, String> configuration) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(STATEMENT_DELETE_CONFIGURATION);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (Map.Entry<String, String> entry : configuration.entrySet()) {
+			// FIXME - Oracle cannot store an empty string - it converts them
+			// to null - so add a hack to work around the problem.
+			String value = entry.getValue();
+			if (StringUtils.isBlank(value)) {
+				value = " ";
 			}
-			pstmt.executeBatch();
-		} finally {
-			DatabaseConnection.closeStatement(pstmt);
-			DatabaseConnection.closeStatement(stmt);
+			Object[] args = { entry.getKey(), value };
+			batchArgs.add(args);
 		}
+		DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_CONFIGURATION, batchArgs);
 	}
 
 	/**
 	 *
 	 */
-	public void updateNamespace(Namespace namespace, Connection conn) throws SQLException {
+	public void updateNamespace(Namespace namespace) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			// update if the ID is specified AND a namespace with the same ID already exists
-			boolean isUpdate = (namespace.getId() != null && this.lookupNamespaces(conn).indexOf(namespace) != -1);
+			boolean isUpdate = (namespace.getId() != null && this.lookupNamespaces().indexOf(namespace) != -1);
 			// if adding determine the namespace ID(s)
 			if (!isUpdate && namespace.getId() == null) {
 				// note - this returns the last id in the system, so add one
-				int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_NAMESPACE_SEQUENCE, "namespace_id", conn);
+				int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_NAMESPACE_SEQUENCE);
 				if (nextId < 200) {
 					// custom namespaces start with IDs of 200 or more to leave room for future expansion
-					nextId = 199;
+					nextId = 200;
 				}
-				namespace.setId(nextId + 1);
+				namespace.setId(nextId);
 			}
 			// execute the adds/updates
 			stmt = (isUpdate) ? conn.prepareStatement(STATEMENT_UPDATE_NAMESPACE) : conn.prepareStatement(STATEMENT_INSERT_NAMESPACE);
@@ -3144,92 +2408,74 @@ public class AnsiQueryHandler implements QueryHandler {
 			stmt.setInt(3, namespace.getId());
 			stmt.executeUpdate();
 		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.closeConnection(conn, stmt);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			// delete any existing translation then add the new one
-			stmt = conn.prepareStatement(STATEMENT_DELETE_NAMESPACE_TRANSLATIONS);
-			stmt.setInt(1, virtualWikiId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_NAMESPACE_TRANSLATION);
-			String translatedNamespace;
-			for (Namespace namespace : namespaces) {
-				translatedNamespace = namespace.getLabel(virtualWiki);
-				if (translatedNamespace.equals(namespace.getDefaultLabel())) {
-					continue;
-				}
-				stmt.setInt(1, namespace.getId());
-				stmt.setInt(2, virtualWikiId);
-				stmt.setString(3, translatedNamespace);
-				stmt.addBatch();
+	public void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId) throws SQLException {
+		// delete any existing translation then add the new one
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_NAMESPACE_TRANSLATIONS,
+				virtualWikiId
+		);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		String translatedNamespace;
+		for (Namespace namespace : namespaces) {
+			translatedNamespace = namespace.getLabel(virtualWiki);
+			if (translatedNamespace.equals(namespace.getDefaultLabel())) {
+				continue;
 			}
-			stmt.executeBatch();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			Object[] args = { namespace.getId(), virtualWikiId, translatedNamespace };
+			batchArgs.add(args);
+		}
+		if (!batchArgs.isEmpty()) {
+			DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_NAMESPACE_TRANSLATION, batchArgs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void updateRole(Role role, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_ROLE);
-			stmt.setString(1, role.getDescription());
-			stmt.setString(2, role.getAuthority());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateRole(Role role) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_ROLE,
+				role.getDescription(),
+				role.getAuthority()
+		);
 	}
 	
 	/**
 	 *
 	 */
-	public void updateTopic(Topic topic, int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_TOPIC);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setString(2, topic.getName());
-			stmt.setInt(3, topic.getTopicType().id());
-			stmt.setInt(4, (topic.getReadOnly() ? 1 : 0));
-			if (topic.getCurrentVersionId() == null) {
-				stmt.setNull(5, Types.INTEGER);
-			} else {
-				stmt.setInt(5, topic.getCurrentVersionId());
-			}
-			stmt.setTimestamp(6, topic.getDeleteDate());
-			stmt.setInt(7, (topic.getAdminOnly() ? 1 : 0));
-			stmt.setString(8, topic.getRedirectTo());
-			stmt.setInt(9, topic.getNamespace().getId());
-			stmt.setString(10, topic.getPageName());
-			stmt.setString(11, topic.getPageName().toLowerCase());
-			stmt.setInt(12, topic.getTopicId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateTopic(Topic topic, int virtualWikiId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_TOPIC,
+				virtualWikiId,
+				topic.getName(),
+				topic.getTopicType().id(),
+				(topic.getReadOnly() ? 1 : 0),
+				topic.getCurrentVersionId(),
+				topic.getDeleteDate(),
+				(topic.getAdminOnly() ? 1 : 0),
+				topic.getRedirectTo(),
+				topic.getNamespace().getId(),
+				topic.getPageName(),
+				topic.getPageName().toLowerCase(),
+				topic.getTopicId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateTopicNamespaces(List<Topic> topics, Connection conn) throws SQLException {
+	public void updateTopicNamespaces(List<Topic> topics) throws SQLException {
+		Connection conn = null;
 		PreparedStatement stmt = null;
 		try {
+			conn = DatabaseConnection.getConnection();
 			stmt = conn.prepareStatement(STATEMENT_UPDATE_TOPIC_NAMESPACE);
 			for (Topic topic : topics) {
 				stmt.setInt(1, topic.getNamespace().getId());
@@ -3240,221 +2486,158 @@ public class AnsiQueryHandler implements QueryHandler {
 			}
 			stmt.executeBatch();
 		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			DatabaseConnection.closeConnection(conn, stmt);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void updateTopicVersion(TopicVersion topicVersion, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_TOPIC_VERSION);
-			stmt.setInt(1, topicVersion.getTopicId());
-			stmt.setString(2, topicVersion.getEditComment());
-			stmt.setString(3, topicVersion.getVersionContent());
-			if (topicVersion.getAuthorId() == null) {
-				stmt.setNull(4, Types.INTEGER);
-			} else {
-				stmt.setInt(4, topicVersion.getAuthorId());
-			}
-			stmt.setInt(5, topicVersion.getEditType());
-			stmt.setString(6, topicVersion.getAuthorDisplay());
-			stmt.setTimestamp(7, topicVersion.getEditDate());
-			if (topicVersion.getPreviousTopicVersionId() == null) {
-				stmt.setNull(8, Types.INTEGER);
-			} else {
-				stmt.setInt(8, topicVersion.getPreviousTopicVersionId());
-			}
-			stmt.setInt(9, topicVersion.getCharactersChanged());
-			stmt.setString(10, topicVersion.getVersionParamString());
-			stmt.setInt(11, topicVersion.getTopicVersionId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateTopicVersion(TopicVersion topicVersion) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_TOPIC_VERSION,
+				topicVersion.getTopicId(),
+				topicVersion.getEditComment(),
+				topicVersion.getVersionContent(),
+				topicVersion.getAuthorId(),
+				topicVersion.getEditType(),
+				topicVersion.getAuthorDisplay(),
+				topicVersion.getEditDate(),
+				topicVersion.getPreviousTopicVersionId(),
+				topicVersion.getCharactersChanged(),
+				topicVersion.getVersionParamString(),
+				topicVersion.getTopicVersionId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateUserBlock(UserBlock userBlock, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_USER_BLOCK);
-			if (userBlock.getWikiUserId() == null) {
-				stmt.setNull(1, Types.INTEGER);
-			} else {
-				stmt.setInt(1, userBlock.getWikiUserId());
-			}
-			stmt.setString(2, userBlock.getIpAddress());
-			stmt.setTimestamp(3, userBlock.getBlockDate());
-			stmt.setTimestamp(4, userBlock.getBlockEndDate());
-			stmt.setString(5, userBlock.getBlockReason());
-			stmt.setInt(6, userBlock.getBlockedByUserId());
-			stmt.setTimestamp(7, userBlock.getUnblockDate());
-			stmt.setString(8, userBlock.getUnblockReason());
-			if (userBlock.getUnblockedByUserId() == null) {
-				stmt.setNull(9, Types.INTEGER);
-			} else {
-				stmt.setInt(9, userBlock.getUnblockedByUserId());
-			}
-			stmt.setInt(10, userBlock.getBlockId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateUserBlock(UserBlock userBlock) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_USER_BLOCK,
+				userBlock.getWikiUserId(),
+				userBlock.getIpAddress(),
+				userBlock.getBlockDate(),
+				userBlock.getBlockEndDate(),
+				userBlock.getBlockReason(),
+				userBlock.getBlockedByUserId(),
+				userBlock.getUnblockDate(),
+				userBlock.getUnblockReason(),
+				userBlock.getUnblockedByUserId(),
+				userBlock.getBlockId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateUserDetails(WikiUserDetails userDetails, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_USER);
-			stmt.setString(1, userDetails.getPassword());
-			stmt.setInt(2, 1);
-			stmt.setString(3, userDetails.getUsername());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateUserDetails(WikiUserDetails userDetails) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_USER,
+				userDetails.getPassword(),
+				1,
+				userDetails.getUsername()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateVirtualWiki(VirtualWiki virtualWiki, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_VIRTUAL_WIKI);
-			stmt.setString(1, (virtualWiki.isDefaultRootTopicName() ? null : virtualWiki.getRootTopicName()));
-			stmt.setString(2, (virtualWiki.isDefaultLogoImageUrl() ? null : virtualWiki.getLogoImageUrl()));
-			stmt.setString(3, (virtualWiki.isDefaultMetaDescription() ? null : virtualWiki.getMetaDescription()));
-			stmt.setString(4, (virtualWiki.isDefaultSiteName() ? null : virtualWiki.getSiteName()));
-			stmt.setInt(5, virtualWiki.getVirtualWikiId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateVirtualWiki(VirtualWiki virtualWiki) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_VIRTUAL_WIKI,
+				(virtualWiki.isDefaultRootTopicName() ? null : virtualWiki.getRootTopicName()),
+				(virtualWiki.isDefaultLogoImageUrl() ? null : virtualWiki.getLogoImageUrl()),
+				(virtualWiki.isDefaultMetaDescription() ? null : virtualWiki.getMetaDescription()),
+				(virtualWiki.isDefaultSiteName() ? null : virtualWiki.getSiteName()),
+				virtualWiki.getVirtualWikiId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateWikiFile(WikiFile wikiFile, int virtualWikiId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_WIKI_FILE);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setString(2, wikiFile.getFileName());
-			stmt.setString(3, wikiFile.getUrl());
-			stmt.setString(4, wikiFile.getMimeType());
-			stmt.setInt(5, wikiFile.getTopicId());
-			stmt.setTimestamp(6, wikiFile.getDeleteDate());
-			stmt.setInt(7, (wikiFile.getReadOnly() ? 1 : 0));
-			stmt.setInt(8, (wikiFile.getAdminOnly() ? 1 : 0));
-			stmt.setLong(9, wikiFile.getFileSize());
-			stmt.setInt(10, wikiFile.getFileId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_WIKI_FILE,
+				virtualWikiId,
+				wikiFile.getFileName(),
+				wikiFile.getUrl(),
+				wikiFile.getMimeType(),
+				wikiFile.getTopicId(),
+				wikiFile.getDeleteDate(),
+				(wikiFile.getReadOnly() ? 1 : 0),
+				(wikiFile.getAdminOnly() ? 1 : 0),
+				wikiFile.getFileSize(),
+				wikiFile.getFileId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateWikiGroup(WikiGroup group, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_GROUP);
-			stmt.setString(1, group.getName());
-			stmt.setString(2, group.getDescription());
-			stmt.setInt(3, group.getGroupId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateWikiGroup(WikiGroup group) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_GROUP,
+				group.getName(),
+				group.getDescription(),
+				group.getGroupId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void updateWikiUser(WikiUser user, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_WIKI_USER);
-			stmt.setString(1, user.getUsername());
-			stmt.setString(2, user.getDisplayName());
-			stmt.setTimestamp(3, user.getLastLoginDate());
-			stmt.setString(4, user.getLastLoginIpAddress());
-			stmt.setString(5, user.getEmail());
-			stmt.setInt(6, user.getUserId());
-			stmt.executeUpdate();
-			// Store user preferences
-			this.updateWikiUserPreferences(user, conn);
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			throw e;
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateWikiUser(WikiUser user) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_WIKI_USER,
+				user.getUsername(),
+				user.getDisplayName(),
+				user.getLastLoginDate(),
+				user.getLastLoginIpAddress(),
+				user.getEmail(),
+				user.getUserId()
+		);
 	}
 
 	/**
 	 *
 	 */
-	private void updateWikiUserPreferences(WikiUser user, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		Map<String, String> defaults = this.lookupUserPreferencesDefaults(conn);
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_USER_PREFERENCES);
-			stmt.setInt(1, user.getUserId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateWikiUserPreferences(WikiUser user) throws SQLException {
+		Map<String, String> preferenceDefaults = this.lookupUserPreferencesDefaults();
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_USER_PREFERENCES,
+				user.getUserId()
+		);
 		Map<String, String> preferences = user.getPreferences();
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_USER_PREFERENCE);
-			// Only store preferences that are not default
-			for (String key : preferences.keySet()) {
-				String defVal = defaults.get(key);
-				String cusVal = preferences.get(key);
-				if (StringUtils.isBlank(cusVal) || StringUtils.equals(defVal, cusVal)) {
-					continue;
-				}
-				stmt.setInt(1, user.getUserId());
-				stmt.setString(2, key);
-				stmt.setString(3, cusVal);
-				stmt.executeUpdate();
+		// Only store preferences that are not default
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (String key : preferences.keySet()) {
+			String defVal = preferenceDefaults.get(key);
+			String cusVal = preferences.get(key);
+			if (StringUtils.isBlank(cusVal) || StringUtils.equals(defVal, cusVal)) {
+				continue;
 			}
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			throw e;
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
+			Object[] args = { user.getUserId(), key, cusVal };
+			batchArgs.add(args);
+		}
+		if (!batchArgs.isEmpty()) {
+			DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_USER_PREFERENCE, batchArgs);
 		}
 	}
 
 	/**
 	 *
 	 */
-	public void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_USER_PREFERENCE_DEFAULTS);
-			stmt.setString(1, userPreferenceDefaultValue);
-			stmt.setString(2, userPreferenceGroupKey);
-			stmt.setInt(3, sequenceNr);
-			stmt.setString(4, userPreferenceKey);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_USER_PREFERENCE_DEFAULTS,
+				userPreferenceDefaultValue,
+				userPreferenceGroupKey,
+				sequenceNr,
+				userPreferenceKey
+		);
 	}
 	
 	public boolean existsUserPreferenceDefault(String userPreferenceKey) throws SQLException {
@@ -3468,56 +2651,37 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	public void updatePwResetChallengeData(WikiUser user) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_PW_RESET_CHALLENGE_DATA);
-			stmt.setString(1, user.getChallengeValue());
-			stmt.setTimestamp(2, user.getChallengeDate());
-			stmt.setString(3, user.getChallengeIp());
-			stmt.setInt(4, user.getChallengeTries());
-			stmt.setString(5, user.getUsername());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
-			// explicitly null the variable to improve garbage collection.
-			// with very large loops this can help avoid OOM "GC overhead
-			// limit exceeded" errors.
-			stmt = null;
-			conn = null;
-		}
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_UPDATE_PW_RESET_CHALLENGE_DATA,
+				user.getChallengeValue(),
+				user.getChallengeDate(),
+				user.getChallengeIp(),
+				user.getChallengeTries(),
+				user.getUsername()
+		);
 	}
 	/**
 	 *
 	 */
-	public void insertImage(ImageData imageData, boolean isResized, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_INSERT_FILE_DATA);
-			stmt.setInt(1, imageData.fileVersionId);
-			stmt.setInt(2, isResized ? imageData.width : 0);
-			stmt.setInt(3, imageData.width);
-			stmt.setInt(4, imageData.height);
-			stmt.setBytes(5, imageData.data);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void insertImage(ImageData imageData, boolean isResized) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_INSERT_FILE_DATA,
+				imageData.fileVersionId,
+				(isResized ? imageData.width : 0),
+				imageData.width,
+				imageData.height,
+				imageData.data
+		);
 	}
 
 	/**
 	 *
 	 */
-	public void deleteResizedImages(int fileId, Connection conn) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(STATEMENT_DELETE_RESIZED_IMAGES);
-			stmt.setInt(1, fileId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
+	public void deleteResizedImages(int fileId) throws SQLException {
+		DatabaseConnection.getJdbcTemplate().update(
+				STATEMENT_DELETE_RESIZED_IMAGES,
+				fileId
+		);
 	}
 
 	/**
@@ -3562,7 +2726,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 * Inner class for converting result set to category.
 	 */
-	private static final class CategoryMapper implements RowMapper<Category> {
+	static final class CategoryMapper implements RowMapper<Category> {
 
 		private final String virtualWikiName;
 
@@ -3590,7 +2754,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 * Inner class for converting result set to interwiki.
 	 */
-	private static final class ImageDataMapper implements RowMapper<ImageData> {
+	static final class ImageDataMapper implements RowMapper<ImageData> {
 
 		private final boolean isFileVersion;
 
@@ -3620,7 +2784,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 * Inner class for converting result set to interwiki.
 	 */
-	private static final class InterwikiMapper implements RowMapper<Interwiki> {
+	static final class InterwikiMapper implements RowMapper<Interwiki> {
 
 		/**
 		 *
@@ -3637,9 +2801,99 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
+	 * Inner class for converting result set to log item.
+	 */
+	static final class LogItemMapper implements RowMapper<LogItem> {
+
+		private final String virtualWikiName;
+
+		/**
+		 *
+		 */
+		LogItemMapper(String virtualWikiName) {
+			this.virtualWikiName = virtualWikiName;
+		}
+
+		/**
+		 *
+		 */
+		public LogItem mapRow(ResultSet rs, int rowNum) throws SQLException {
+			LogItem logItem = new LogItem();
+			int userId = rs.getInt("wiki_user_id");
+			if (userId > 0) {
+				logItem.setUserId(userId);
+			}
+			logItem.setUserDisplayName(rs.getString("display_name"));
+			int topicId = rs.getInt("topic_id");
+			if (topicId > 0) {
+				logItem.setTopicId(topicId);
+			}
+			int topicVersionId = rs.getInt("topic_version_id");
+			if (topicVersionId > 0) {
+				logItem.setTopicVersionId(topicVersionId);
+			}
+			logItem.setLogDate(rs.getTimestamp("log_date"));
+			logItem.setLogComment(rs.getString("log_comment"));
+			logItem.setLogParamString(rs.getString("log_params"));
+			logItem.setLogType(rs.getInt("log_type"));
+			logItem.setLogSubType(rs.getInt("log_sub_type"));
+			logItem.setVirtualWiki(virtualWikiName);
+			return logItem;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to recent change.
+	 */
+	static final class RecentChangeMapper implements RowMapper<RecentChange> {
+
+		/**
+		 *
+		 */
+		public RecentChange mapRow(ResultSet rs, int rowNum) throws SQLException {
+			RecentChange change = new RecentChange();
+			int topicVersionId = rs.getInt("topic_version_id");
+			if (topicVersionId > 0) {
+				change.setTopicVersionId(topicVersionId);
+			}
+			int previousTopicVersionId = rs.getInt("previous_topic_version_id");
+			if (previousTopicVersionId > 0) {
+				change.setPreviousTopicVersionId(previousTopicVersionId);
+			}
+			int topicId = rs.getInt("topic_id");
+			if (topicId > 0) {
+				change.setTopicId(topicId);
+			}
+			change.setTopicName(rs.getString("topic_name"));
+			change.setCharactersChanged(rs.getInt("characters_changed"));
+			change.setChangeDate(rs.getTimestamp("change_date"));
+			change.setChangeComment(rs.getString("change_comment"));
+			int userId = rs.getInt("wiki_user_id");
+			if (userId > 0) {
+				change.setAuthorId(userId);
+			}
+			change.setAuthorName(rs.getString("display_name"));
+			int editType = rs.getInt("edit_type");
+			if (editType > 0) {
+				change.setEditType(editType);
+				change.initChangeWikiMessageForVersion(editType, rs.getString("log_params"));
+			}
+			int logType = rs.getInt("log_type");
+			Integer logSubType = (rs.getInt("log_sub_type") <= 0) ? null : rs.getInt("log_sub_type");
+			if (logType > 0) {
+				change.setLogType(logType);
+				change.setLogSubType(logSubType);
+				change.initChangeWikiMessageForLog(rs.getString("virtual_wiki_name"), logType, logSubType, rs.getString("log_params"), change.getTopicVersionId());
+			}
+			change.setVirtualWiki(rs.getString("virtual_wiki_name"));
+			return change;
+		}
+	}
+
+	/**
 	 * Inner class for converting result set to role.
 	 */
-	private static final class RoleMapper implements RowMapper<Role> {
+	static final class RoleMapper implements RowMapper<Role> {
 
 		/**
 		 *
@@ -3652,9 +2906,72 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
+	 * Inner class for converting result set to topic version.
+	 */
+	static final class TopicVersionMapper implements RowMapper<TopicVersion> {
+
+		/**
+		 *
+		 */
+		public TopicVersion mapRow(ResultSet rs, int rowNum) throws SQLException {
+			TopicVersion topicVersion = new TopicVersion();
+			topicVersion.setTopicVersionId(rs.getInt("topic_version_id"));
+			topicVersion.setTopicId(rs.getInt("topic_id"));
+			topicVersion.setEditComment(rs.getString("edit_comment"));
+			topicVersion.setVersionContent(rs.getString("version_content"));
+			// FIXME - Oracle cannot store an empty string - it converts them
+			// to null - so add a hack to work around the problem.
+			if (topicVersion.getVersionContent() == null) {
+				topicVersion.setVersionContent("");
+			}
+			int previousTopicVersionId = rs.getInt("previous_topic_version_id");
+			if (previousTopicVersionId > 0) {
+				topicVersion.setPreviousTopicVersionId(previousTopicVersionId);
+			}
+			int userId = rs.getInt("wiki_user_id");
+			if (userId > 0) {
+				topicVersion.setAuthorId(userId);
+			}
+			topicVersion.setCharactersChanged(rs.getInt("characters_changed"));
+			topicVersion.setVersionParamString(rs.getString("version_params"));
+			topicVersion.setEditDate(rs.getTimestamp("edit_date"));
+			topicVersion.setEditType(rs.getInt("edit_type"));
+			topicVersion.setAuthorDisplay(rs.getString("wiki_user_display"));
+			return topicVersion;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to user block.
+	 */
+	static final class UserBlockMapper implements RowMapper<UserBlock> {
+
+		/**
+		 *
+		 */
+		public UserBlock mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Integer wikiUserId = (rs.getInt("wiki_user_id") > 0) ? rs.getInt("wiki_user_id") : null;
+			String ipAddress = rs.getString("ip_address");
+			Timestamp blockEndDate = rs.getTimestamp("block_end_date");
+			int blockedByUserId = rs.getInt("blocked_by_user_id");
+			UserBlock userBlock = new UserBlock(wikiUserId, ipAddress, blockEndDate, blockedByUserId);
+			userBlock.setBlockId(rs.getInt("user_block_id"));
+			userBlock.setBlockDate(rs.getTimestamp("block_date"));
+			userBlock.setBlockReason(rs.getString("block_reason"));
+			userBlock.setUnblockDate(rs.getTimestamp("unblock_date"));
+			userBlock.setUnblockReason(rs.getString("unblock_reason"));
+			int unblockedByUserId = rs.getInt("unblocked_by_user_id");
+			if (unblockedByUserId > 0) {
+				userBlock.setUnblockedByUserId(unblockedByUserId);
+			}
+			return userBlock;
+		}
+	}
+
+	/**
 	 * Inner class for converting result set to virtual wiki.
 	 */
-	private static final class VirtualWikiMapper implements RowMapper<VirtualWiki> {
+	static final class VirtualWikiMapper implements RowMapper<VirtualWiki> {
 
 		/**
 		 *
@@ -3673,7 +2990,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 * Inner class for converting result set to wiki file.
 	 */
-	private static final class WikiFileMapper implements RowMapper<WikiFile> {
+	static final class WikiFileMapper implements RowMapper<WikiFile> {
 
 		private final String virtualWikiName;
 
@@ -3706,7 +3023,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 * Inner class for converting result set to wiki file version.
 	 */
-	private static final class WikiFileVersionMapper implements RowMapper<WikiFileVersion> {
+	static final class WikiFileVersionMapper implements RowMapper<WikiFileVersion> {
 
 		/**
 		 *
@@ -3729,11 +3046,10 @@ public class AnsiQueryHandler implements QueryHandler {
 		}
 	}
 
-
 	/**
 	 * Inner class for converting result set to wiki group.
 	 */
-	private static final class WikiGroupMapper implements RowMapper<WikiGroup> {
+	static final class WikiGroupMapper implements RowMapper<WikiGroup> {
 
 		/**
 		 *
@@ -3743,6 +3059,28 @@ public class AnsiQueryHandler implements QueryHandler {
 			wikiGroup.setGroupId(rs.getInt("group_id"));
 			wikiGroup.setDescription(rs.getString("group_description"));
 			return wikiGroup;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to wiki user.
+	 */
+	static final class WikiUserMapper implements RowMapper<WikiUser> {
+
+		/**
+		 *
+		 */
+		public WikiUser mapRow(ResultSet rs, int rowNum) throws SQLException {
+			String username = rs.getString("login");
+			WikiUser user = new WikiUser(username);
+			user.setDisplayName(rs.getString("display_name"));
+			user.setUserId(rs.getInt("wiki_user_id"));
+			user.setCreateDate(rs.getTimestamp("create_date"));
+			user.setLastLoginDate(rs.getTimestamp("last_login_date"));
+			user.setCreateIpAddress(rs.getString("create_ip_address"));
+			user.setLastLoginIpAddress(rs.getString("last_login_ip_address"));
+			user.setEmail(rs.getString("email"));
+			return user;
 		}
 	}
 }

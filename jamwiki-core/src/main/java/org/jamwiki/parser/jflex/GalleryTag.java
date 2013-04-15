@@ -138,6 +138,7 @@ public class GalleryTag implements JFlexCustomTagItem {
 	 * resulting wiki text output.
 	 */
 	public String parse(JFlexLexer lexer, Map<String, String> attributes, String content) throws ParserException {
+logger.error("GalleryTag.parse");
 		// get the tag contents as a list of wiki syntax for image thumbnails.
 		List<String> imageLinks = this.generateImageLinks(lexer.getParserInput(), content);
 		// generate the gallery wiki text

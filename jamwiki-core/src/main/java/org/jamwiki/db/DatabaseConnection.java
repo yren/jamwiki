@@ -30,16 +30,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.jamwiki.Environment;
 import org.jamwiki.utils.ResourceUtil;
 import org.jamwiki.utils.WikiLogger;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.TransactionSystemException;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * This class provides methods for retrieving database connections, executing queries,
@@ -50,6 +48,7 @@ public class DatabaseConnection {
 	private static final WikiLogger logger = WikiLogger.getLogger(DatabaseConnection.class.getName());
 	private static DataSource dataSource = null;
 	private static JdbcTemplate jdbcTemplate = null;
+	private static TransactionTemplate transactionTemplate = null;
 	private static DataSourceTransactionManager transactionManager = null;
 
 	/**
@@ -160,23 +159,20 @@ public class DatabaseConnection {
 	}
 
 	/**
-	 * Execute a query to retrieve a single integer value, generally the result of SQL such
+	 * Execute a query to retrieve the next available integer ID for a table,
+	 * generally the result of the next available ID after executing SQL such
 	 * as "select max(id) from table".
 	 *
 	 * @param sql The SQL to execute.
-	 * @param field The field that is returned containing the integer value.
-	 * @param conn The database connection to use when querying.
-	 * @return Returns the result of the query or 0 if no result is found.
+	 * @return Returns the result of the query or 1 if no result is found.
 	 */
-	protected static int executeSequenceQuery(String sql, String field, Connection conn) throws SQLException {
-		Statement stmt = null;
-		ResultSet rs = null;
+	protected static int executeSequenceQuery(String sql) throws SQLException {
 		try {
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery(sql);
-			return (rs.next()) ? rs.getInt(field) : 0;
-		} finally {
-			DatabaseConnection.closeConnection(null, stmt, rs);
+			Integer result = DatabaseConnection.getJdbcTemplate().queryForObject(sql, Integer.class);
+			return (result == null) ? 1 : result.intValue() + 1;
+		} catch (IncorrectResultSizeDataAccessException e) {
+			// no rows available
+			return 1;
 		}
 	}
 
@@ -275,6 +271,21 @@ public class DatabaseConnection {
 	}
 
 	/**
+	 * Return a Spring TransactionTemplate suitable for executing transactional
+	 * database logic.
+	 */
+	protected static TransactionTemplate getTransactionTemplate() {
+		if (transactionTemplate == null) {
+			if (transactionManager == null) {
+				// DataSource has not yet been created, obtain it now
+				configDataSource();
+			}
+			transactionTemplate = new TransactionTemplate(transactionManager);
+		}
+		return transactionTemplate;
+	}
+
+	/**
 	 * Test whether the database identified by the given parameters can be connected to.
 	 *
 	 * @param driver A String indicating the full path for the database driver class.
@@ -338,71 +349,5 @@ public class DatabaseConnection {
 			}
 			return testDataSource.getConnection();
 		}
-	}
-
-	/**
-	 * Starts a transaction using the default settings.
-	 *
-	 * @return TransactionStatus representing the status of the Transaction
-	 * @throws SQLException
-	 */
-	public static TransactionStatus startTransaction() throws SQLException {
-		return startTransaction(new DefaultTransactionDefinition());
-	}
-
-	/**
-	 * Starts a transaction, using the given TransactionDefinition
-	 *
-	 * @param definition TransactionDefinition
-	 * @return TransactionStatus
-	 * @throws SQLException
-	 */
-	protected static TransactionStatus startTransaction(TransactionDefinition definition) {
-		if (transactionManager == null || dataSource == null) {
-			configDataSource(); // this will create both the DataSource and a TransactionManager
-		}
-		return transactionManager.getTransaction(definition);
-	}
-
-	/**
-	 * Perform a rollback, handling rollback exceptions properly.
-	 * @param status object representing the transaction
-	 * @param ex the thrown application exception or error
-	 * @throws TransactionException in case of a rollback error
-	 */
-	protected static void rollbackOnException(TransactionStatus status, Throwable ex) throws TransactionException {
-		logger.debug("Initiating transaction rollback on application exception", ex);
-		if (status == null) {
-			logger.info("TransactionStatus is null, unable to rollback");
-			return;
-		}
-		try {
-			transactionManager.rollback(status);
-		} catch (TransactionSystemException ex2) {
-			logger.error("Application exception overridden by rollback exception", ex);
-			ex2.initApplicationException(ex);
-			throw ex2;
-		} catch (RuntimeException ex2) {
-			logger.error("Application exception overridden by rollback exception", ex);
-			throw ex2;
-		} catch (Error err) {
-			logger.error("Application exception overridden by rollback error", ex);
-			throw err;
-		}
-	}
-
-	/**
-	 * Commit the current transaction.
-	 * Note if the transaction has been programmatically marked for rollback then
-	 * a rollback will occur instead.
-	 *
-	 * @param status TransactionStatus representing the status of the transaction
-	 */
-	protected static void commit(TransactionStatus status) {
-		if (status == null) {
-			logger.info("TransactionStatus is null, unable to commit");
-			return;
-		}
-		transactionManager.commit(status);
 	}
 }

@@ -24,9 +24,8 @@ import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
 import org.jamwiki.utils.WikiLogger;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 
 /**
  * This class simply contains utility methods for upgrading database schemas
@@ -49,60 +48,58 @@ public class DatabaseUpgrades {
 	}
 
 	/**
-	 *
-	 */
-	private static TransactionDefinition getTransactionDefinition() {
-		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-		def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-		return def;
-	}
-
-	/**
 	 * Perform the required database upgrade steps when upgrading from versions
 	 * older than JAMWiki 1.3.
 	 */
-	public static void upgrade130(List<WikiMessage> messages) throws WikiException {
-		TransactionStatus status = null;
+	public static void upgrade130(final List<WikiMessage> messages) throws WikiException {
 		try {
-			status = DatabaseConnection.startTransaction(getTransactionDefinition());
-			Connection conn = DatabaseConnection.getConnection();
-			// New tables as of JAMWiki 1.3
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("STATEMENT_CREATE_USER_PREFERENCES_DEFAULTS_TABLE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.table.added", "jam_user_preferences_defaults"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("STATEMENT_CREATE_USER_PREFERENCES_TABLE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.table.added", "jam_user_preferences"));
-			WikiDatabase.setupUserPreferencesDefaults();
-			// Create default values for user preferences.
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_user_preferences_defaults"));
-			// Migrate existing user preferences to new tables
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_DEFAULT_LOCALE", conn);
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_EDITOR", conn);
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_SIGNATURE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_user_preferences"));
-			// Drop old user preference columns from jam_wiki_user
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_DEFAULT_LOCALE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_EDITOR", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_SIGNATURE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_VALUE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_DATE", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_IP", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
-			WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_TRIES", conn);
-			messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
-		} catch (DataAccessException e) {
-			DatabaseConnection.rollbackOnException(status, e);
-			logger.error("Database failure during upgrade", e);
-			throw new WikiException(new WikiMessage("upgrade.error.fatal", e.getMessage()));
-		} catch (SQLException e) {
-			DatabaseConnection.rollbackOnException(status, e);
-			logger.error("Database failure during upgrade", e);
+			DatabaseConnection.getTransactionTemplate().execute(
+				new TransactionCallbackWithoutResult() {
+					protected void doInTransactionWithoutResult(TransactionStatus status) {
+						try {
+							// New tables as of JAMWiki 1.3
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("STATEMENT_CREATE_USER_PREFERENCES_DEFAULTS_TABLE");
+							messages.add(new WikiMessage("upgrade.message.db.table.added", "jam_user_preferences_defaults"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("STATEMENT_CREATE_USER_PREFERENCES_TABLE");
+							messages.add(new WikiMessage("upgrade.message.db.table.added", "jam_user_preferences"));
+							WikiDatabase.setupUserPreferencesDefaults();
+							// Create default values for user preferences.
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_user_preferences_defaults"));
+							// Migrate existing user preferences to new tables
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_DEFAULT_LOCALE");
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_EDITOR");
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_MIGRATE_USER_PREFERENCES_SIGNATURE");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_user_preferences"));
+							// Drop old user preference columns from jam_wiki_user
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_DEFAULT_LOCALE");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_EDITOR");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_REMOVE_WIKI_USER_TABLE_COLUMN_SIGNATURE");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_wiki_user"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_VALUE");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_DATE");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_IP");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
+							WikiBase.getDataHandler().queryHandler().executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_TRIES");
+							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
+						} catch (SQLException e) {
+							status.setRollbackOnly();
+							throw new TransactionRuntimeException(e);
+						} catch (DataAccessException e) {
+							status.setRollbackOnly();
+							throw new TransactionRuntimeException(e);
+						} catch (WikiException e) {
+							status.setRollbackOnly();
+							throw new TransactionRuntimeException(e);
+						}
+					}
+				}
+			);
+		} catch (TransactionRuntimeException e) {
 			throw new WikiException(new WikiMessage("upgrade.error.fatal", e.getMessage()));
 		}
-		DatabaseConnection.commit(status);
 	}
 }

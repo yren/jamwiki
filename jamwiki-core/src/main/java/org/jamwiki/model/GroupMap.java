@@ -47,7 +47,7 @@ public class GroupMap implements Serializable {
 	 * and GroupMap.GROUP_MAP_USER. The value is set by the costructor depending
 	 * on which instance type of GroupMap is created.
 	 */
-	private int groupMapType = -1;
+	private final int groupMapType;
 
 	/**
 	 * Attributes when acting as a group containing users
@@ -88,13 +88,6 @@ public class GroupMap implements Serializable {
 	 */
 	public int getGroupMapType() {
 		return groupMapType;
-	}
-
-	/**
-	 *
-	 */
-	public void setGroupMapType(int groupMapType) {
-		this.groupMapType = groupMapType;
 	}
 
 	/**

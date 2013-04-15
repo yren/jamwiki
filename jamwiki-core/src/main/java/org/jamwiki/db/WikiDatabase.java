@@ -55,6 +55,7 @@ import org.jamwiki.utils.ResourceUtil;
 import org.jamwiki.utils.WikiLogger;
 import org.jamwiki.utils.WikiUtil;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 
 /**
  * This class contains general database utility methods that are useful for a
@@ -122,11 +123,9 @@ public class WikiDatabase {
 		List<Topic> topics;
 		WikiLink wikiLink;
 		List<VirtualWiki> virtualWikis = WikiBase.getDataHandler().getVirtualWikiList();
-		Connection conn = null;
 		try {
-			conn = DatabaseConnection.getConnection();
 			for (VirtualWiki virtualWiki : virtualWikis) {
-				topicNames = WikiBase.getDataHandler().queryHandler().lookupTopicNames(virtualWiki.getVirtualWikiId(), true, conn);
+				topicNames = WikiBase.getDataHandler().queryHandler().lookupTopicNames(virtualWiki.getVirtualWikiId(), true);
 				if (topicNames.isEmpty()) {
 					continue;
 				}
@@ -137,13 +136,11 @@ public class WikiDatabase {
 					topic.setTopicId(entry.getKey());
 					topics.add(topic);
 				}
-				WikiBase.getDataHandler().queryHandler().updateTopicNamespaces(topics, conn);
+				WikiBase.getDataHandler().queryHandler().updateTopicNamespaces(topics);
 				count += topicNames.size();
 			}
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
-		} finally {
-			DatabaseConnection.closeConnection(conn);
 		}
 		return count;
 	}
@@ -559,50 +556,65 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	protected static void setup(Locale locale, WikiUser user, String username, String encryptedPassword) throws DataAccessException, WikiException {
-		TransactionStatus status = null;
+	protected static void setup(final Locale locale, final WikiUser user, final String username, final String encryptedPassword) throws DataAccessException, WikiException {
 		try {
-			status = DatabaseConnection.startTransaction();
-			Connection conn = DatabaseConnection.getConnection();
-			// set up tables
-			WikiBase.getDataHandler().queryHandler().createTables(conn);
-			WikiDatabase.setupDefaultVirtualWiki();
-			WikiDatabase.setupDefaultNamespaces();
-			WikiDatabase.setupDefaultInterwikis();
-			WikiDatabase.setupRoles();
-			WikiDatabase.setupGroups();
-			WikiDatabase.setupUserPreferencesDefaults();
-			WikiDatabase.setupAdminUser(user, username, encryptedPassword);
-			WikiDatabase.setupSpecialPages(locale, user);
-		} catch (SQLException e) {
-			DatabaseConnection.rollbackOnException(status, e);
-			logger.error("Unable to set up database tables", e);
-			// clean up anything that might have been created
-			try {
-				Connection conn = DatabaseConnection.getConnection();
-				WikiBase.getDataHandler().queryHandler().dropTables(conn);
-			} catch (Exception e2) {}
-			throw new DataAccessException(e);
-		} catch (DataAccessException e) {
-			DatabaseConnection.rollbackOnException(status, e);
-			logger.error("Unable to set up database tables", e);
-			// clean up anything that might have been created
-			try {
-				Connection conn = DatabaseConnection.getConnection();
-				WikiBase.getDataHandler().queryHandler().dropTables(conn);
-			} catch (Exception e2) {}
-			throw e;
-		} catch (WikiException e) {
-			DatabaseConnection.rollbackOnException(status, e);
-			logger.error("Unable to set up database tables", e);
-			// clean up anything that might have been created
-			try {
-				Connection conn = DatabaseConnection.getConnection();
-				WikiBase.getDataHandler().queryHandler().dropTables(conn);
-			} catch (Exception e2) {}
-			throw e;
+			DatabaseConnection.getTransactionTemplate().execute(
+				new TransactionCallbackWithoutResult() {
+					protected void doInTransactionWithoutResult(TransactionStatus status) {
+						Connection conn = null;
+						try {
+							conn = DatabaseConnection.getConnection();
+							// set up tables
+							WikiBase.getDataHandler().queryHandler().createTables(conn);
+							WikiDatabase.setupDefaultVirtualWiki();
+							WikiDatabase.setupDefaultNamespaces();
+							WikiDatabase.setupDefaultInterwikis();
+							WikiDatabase.setupRoles();
+							WikiDatabase.setupGroups();
+							WikiDatabase.setupUserPreferencesDefaults();
+							WikiDatabase.setupAdminUser(user, username, encryptedPassword);
+							WikiDatabase.setupSpecialPages(locale, user);
+						} catch (SQLException e) {
+							status.setRollbackOnly();
+							logger.error("Unable to set up database tables", e);
+							rollbackAfterSetupFailure();
+							throw new TransactionRuntimeException(e);
+						} catch (DataAccessException e) {
+							status.setRollbackOnly();
+							logger.error("Unable to set up database tables", e);
+							rollbackAfterSetupFailure();
+							throw new TransactionRuntimeException(e);
+						} catch (WikiException e) {
+							status.setRollbackOnly();
+							logger.error("Unable to set up database tables", e);
+							rollbackAfterSetupFailure();
+							throw new TransactionRuntimeException(e);
+						} finally {
+							DatabaseConnection.closeConnection(conn);
+						}
+					}
+				}
+			);
+		} catch (TransactionRuntimeException e) {
+			throw new WikiException(new WikiMessage("upgrade.error.fatal", e.getMessage()));
 		}
-		DatabaseConnection.commit(status);
+	}
+
+	/**
+	 *
+	 */
+	private static void rollbackAfterSetupFailure() {
+		// failure during creation, clean up anything that might have been created
+		// clean up anything that might have been created
+		Connection conn = null;
+		try {
+			conn = DatabaseConnection.getConnection();
+			WikiBase.getDataHandler().queryHandler().dropTables(conn);
+		} catch (Exception e) {
+			// ignore, things have failed already
+		} finally {
+			DatabaseConnection.closeConnection(conn);
+		}
 	}
 
 	/**
