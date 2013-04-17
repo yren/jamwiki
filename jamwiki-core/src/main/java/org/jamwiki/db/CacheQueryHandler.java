@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -207,6 +208,92 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
+	public void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException {
+		Connection conn = null;
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		boolean useBatch = (topicVersions.size() > 1);
+		try {
+			conn = DatabaseConnection.getConnection();
+			if (!this.autoIncrementPrimaryKeys()) {
+				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION);
+			} else if (useBatch) {
+				// generated keys don't work in batch mode
+				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT);
+			} else {
+				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
+			}
+			int topicVersionId = -1;
+			if (!this.autoIncrementPrimaryKeys() || useBatch) {
+				// manually retrieve next topic version id when using batch
+				// mode or when the database doesn't support generated keys.
+				topicVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE);
+			}
+			for (TopicVersion topicVersion : topicVersions) {
+				if (!this.autoIncrementPrimaryKeys() || useBatch) {
+					// FIXME - if two threads update the database simultaneously then
+					// it is possible that this code could set the topic version ID
+					// to a value that is different from what the database ends up
+					// using.
+					topicVersion.setTopicVersionId(topicVersionId++);
+				}
+				StringReader sr = null;
+				try {
+					int index = 1;
+					stmt.setInt(index++, topicVersion.getTopicVersionId());
+					if (topicVersion.getEditDate() == null) {
+						topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
+					}
+					stmt.setInt(index++, topicVersion.getTopicId());
+					stmt.setString(index++, topicVersion.getEditComment());
+					//pass the content into a stream to be passed to Caché
+					sr = new StringReader(topicVersion.getVersionContent());
+					stmt.setCharacterStream(index++, sr, topicVersion.getVersionContent().length());
+					if (topicVersion.getAuthorId() == null) {
+						stmt.setNull(index++, Types.INTEGER);
+					} else {
+						stmt.setInt(index++, topicVersion.getAuthorId());
+					}
+					stmt.setInt(index++, topicVersion.getEditType());
+					stmt.setString(index++, topicVersion.getAuthorDisplay());
+					stmt.setTimestamp(index++, topicVersion.getEditDate());
+					if (topicVersion.getPreviousTopicVersionId() == null) {
+						stmt.setNull(index++, Types.INTEGER);
+					} else {
+						stmt.setInt(index++, topicVersion.getPreviousTopicVersionId());
+					}
+					stmt.setInt(index++, topicVersion.getCharactersChanged());
+					stmt.setString(index++, topicVersion.getVersionParamString());
+				} finally {
+					if (sr != null) {
+						sr.close();
+					}
+				}
+				if (useBatch) {
+					stmt.addBatch();
+				} else {
+					stmt.executeUpdate();
+				}
+				if (this.autoIncrementPrimaryKeys() && !useBatch) {
+					rs = stmt.getGeneratedKeys();
+					if (!rs.next()) {
+						throw new SQLException("Unable to determine auto-generated ID for database record");
+					}
+					topicVersion.setTopicVersionId(rs.getInt(1));
+				}
+			}
+			if (useBatch) {
+				stmt.executeBatch();
+			}
+		} finally {
+			DatabaseConnection.closeConnection(conn, stmt, rs);
+		}
+	}
+
+	/**
+	 *
+	 */
+	@Override
 	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_TOPIC_BY_TYPE,
@@ -223,44 +310,5 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 			topicMap.put((Integer)result.get("topic_id"), (String)result.get("topic_name"));
 		}
 		return topicMap;
-	}
-
-	/**
-	 * 
-	 */
-	@Override
-	protected void prepareTopicVersionStatement(TopicVersion topicVersion, PreparedStatement stmt) throws SQLException {
-		StringReader sr = null;
-		try {
-			int index = 1;
-			stmt.setInt(index++, topicVersion.getTopicVersionId());
-			if (topicVersion.getEditDate() == null) {
-				topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
-			}
-			stmt.setInt(index++, topicVersion.getTopicId());
-			stmt.setString(index++, topicVersion.getEditComment());
-			//pass the content into a stream to be passed to Caché
-			sr = new StringReader(topicVersion.getVersionContent());
-			stmt.setCharacterStream(index++, sr, topicVersion.getVersionContent().length());
-			if (topicVersion.getAuthorId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, topicVersion.getAuthorId());
-			}
-			stmt.setInt(index++, topicVersion.getEditType());
-			stmt.setString(index++, topicVersion.getAuthorDisplay());
-			stmt.setTimestamp(index++, topicVersion.getEditDate());
-			if (topicVersion.getPreviousTopicVersionId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, topicVersion.getPreviousTopicVersionId());
-			}
-			stmt.setInt(index++, topicVersion.getCharactersChanged());
-			stmt.setString(index++, topicVersion.getVersionParamString());
-		} finally {
-			if (sr != null) {
-				sr.close();
-			}
-		}
 	}
 }

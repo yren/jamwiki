@@ -55,7 +55,11 @@ import org.jamwiki.model.WikiUserDetails;
 import org.jamwiki.utils.Pagination;
 import org.jamwiki.utils.WikiLogger;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
 /**
  * Default implementation of the QueryHandler implementation for retrieving, inserting,
@@ -511,6 +515,19 @@ public class AnsiQueryHandler implements QueryHandler {
 		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_WIKI_USER_TABLE, conn);
 		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_USERS_TABLE, conn);
 		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_VIRTUAL_WIKI_TABLE, conn);
+	}
+
+	/**
+	 * Execute an insert that returns a generated key value.
+	 */
+	private int executeGeneratedKeyInsert(String insertSql, Object[] args, int[] types, String primaryKeyColumnName) {
+		PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(insertSql, types);
+		String[] keys = { primaryKeyColumnName };
+		factory.setGeneratedKeysColumnNames(keys);
+		factory.setReturnGeneratedKeys(true);
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args), keyHolder);
+		return keyHolder.getKey().intValue();
 	}
 
 	/**
@@ -1227,23 +1244,23 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertGroupMember(String username, int groupId) throws SQLException {
-		PreparedStatement stmt = null;
-		Connection conn = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_MEMBER);
-				int groupMemberId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_MEMBERS_SEQUENCE);
-				stmt.setInt(index++, groupMemberId);
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_MEMBER_AUTO_INCREMENT);
-			}
-			stmt.setString(index++, username);
-			stmt.setInt(index++, groupId);
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[2] : new int[3];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[2] : new Object[3];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int groupMemberId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_MEMBERS_SEQUENCE);
+			types[index] = Types.INTEGER;
+			args[index++] = groupMemberId;
+		}
+		types[index] = Types.VARCHAR;
+		args[index++] = username;
+		types[index] = Types.INTEGER;
+		args[index++] = groupId;
+		if (this.autoIncrementPrimaryKeys()) {
+			this.executeGeneratedKeyInsert(STATEMENT_INSERT_GROUP_MEMBER_AUTO_INCREMENT, args, types, "id");
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_GROUP_MEMBER, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1318,45 +1335,43 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertTopic(Topic topic, int virtualWikiId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC);
-				int topicId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_SEQUENCE);
-				topic.setTopicId(topicId);
-				stmt.setInt(index++, topic.getTopicId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			stmt.setInt(index++, virtualWikiId);
-			stmt.setString(index++, topic.getName());
-			stmt.setInt(index++, topic.getTopicType().id());
-			stmt.setInt(index++, (topic.getReadOnly() ? 1 : 0));
-			if (topic.getCurrentVersionId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, topic.getCurrentVersionId());
-			}
-			stmt.setTimestamp(index++, topic.getDeleteDate());
-			stmt.setInt(index++, (topic.getAdminOnly() ? 1 : 0));
-			stmt.setString(index++, topic.getRedirectTo());
-			stmt.setInt(index++, topic.getNamespace().getId());
-			stmt.setString(index++, topic.getPageName());
-			stmt.setString(index++, topic.getPageName().toLowerCase());
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				topic.setTopicId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[11] : new int[12];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[11] : new Object[12];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int topicId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_SEQUENCE);
+			topic.setTopicId(topicId);
+			types[index] = Types.INTEGER;
+			args[index++] = topicId;
+		}
+		types[index] = Types.INTEGER;
+		args[index++] = virtualWikiId;
+		types[index] = Types.VARCHAR;
+		args[index++] = topic.getName();
+		types[index] = Types.INTEGER;
+		args[index++] = topic.getTopicType().id();
+		types[index] = Types.INTEGER;
+		args[index++] = (topic.getReadOnly() ? 1 : 0);
+		types[index] = Types.INTEGER;
+		args[index++] = topic.getCurrentVersionId();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = topic.getDeleteDate();
+		types[index] = Types.INTEGER;
+		args[index++] = (topic.getAdminOnly() ? 1 : 0);
+		types[index] = Types.VARCHAR;
+		args[index++] = topic.getRedirectTo();
+		types[index] = Types.INTEGER;
+		args[index++] = topic.getNamespace().getId();
+		types[index] = Types.VARCHAR;
+		args[index++] = topic.getPageName();
+		types[index] = Types.VARCHAR;
+		args[index++] = topic.getPageName().toLowerCase();
+		if (this.autoIncrementPrimaryKeys()) {
+			int topicId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_TOPIC_AUTO_INCREMENT, args, types, "topic_id");
+			topic.setTopicId(topicId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_TOPIC, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1378,54 +1393,93 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
+	private void insertTopicVersion(TopicVersion topicVersion) throws SQLException {
+		if (topicVersion.getEditDate() == null) {
+			topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
+		}
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[10] : new int[11];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[10] : new Object[11];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int topicVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE);
+			topicVersion.setTopicVersionId(topicVersionId);
+			types[index] = Types.INTEGER;
+			args[index++] = topicVersionId;
+		}
+		types[index] = Types.INTEGER;
+		args[index++] = topicVersion.getTopicId();
+		types[index] = Types.VARCHAR;
+		args[index++] = topicVersion.getEditComment();
+		types[index] = Types.VARCHAR;
+		args[index++] = topicVersion.getVersionContent();
+		types[index] = Types.INTEGER;
+		args[index++] = topicVersion.getAuthorId();
+		types[index] = Types.INTEGER;
+		args[index++] = topicVersion.getEditType();
+		types[index] = Types.VARCHAR;
+		args[index++] = topicVersion.getAuthorDisplay();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = topicVersion.getEditDate();
+		types[index] = Types.INTEGER;
+		args[index++] = topicVersion.getPreviousTopicVersionId();
+		types[index] = Types.INTEGER;
+		args[index++] = topicVersion.getCharactersChanged();
+		types[index] = Types.VARCHAR;
+		args[index++] = topicVersion.getVersionParamString();
+		if (this.autoIncrementPrimaryKeys()) {
+			int topicVersionId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT, args, types, "topic_version_id");
+			topicVersion.setTopicVersionId(topicVersionId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_TOPIC_VERSION, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
+		}
+	}
+
+	/**
+	 *
+	 */
 	public void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		boolean useBatch = (topicVersions.size() > 1);
-		try {
-			conn = DatabaseConnection.getConnection();
+		if (topicVersions.size() == 1) {
+			this.insertTopicVersion(topicVersions.get(0));
+			return;
+		}
+		// manually retrieve next topic version id when using batch
+		// mode or when the database doesn't support generated keys.
+		int topicVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (TopicVersion topicVersion : topicVersions) {
+			if (topicVersion.getEditDate() == null) {
+				topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
+			}
+			// FIXME - if two threads update the database simultaneously then
+			// it is possible that this code could set the topic version ID
+			// to a value that is different from what the database ends up
+			// using.
+			topicVersion.setTopicVersionId(topicVersionId++);
+			int index = 0;
+			Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[10] : new Object[11];
 			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION);
-			} else if (useBatch) {
-				// generated keys don't work in batch mode
-				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT);
+				args[index++] = topicVersion.getTopicVersionId();
+			}
+			args[index++] = topicVersion.getTopicId();
+			args[index++] = topicVersion.getEditComment();
+			args[index++] = topicVersion.getVersionContent();
+			args[index++] = topicVersion.getAuthorId();
+			args[index++] = topicVersion.getEditType();
+			args[index++] = topicVersion.getAuthorDisplay();
+			args[index++] = topicVersion.getEditDate();
+			args[index++] = topicVersion.getPreviousTopicVersionId();
+			args[index++] = topicVersion.getCharactersChanged();
+			args[index++] = topicVersion.getVersionParamString();
+			batchArgs.add(args);
+		}
+		if (!batchArgs.isEmpty()) {
+			// generated keys don't work in batch mode
+			if (!this.autoIncrementPrimaryKeys()) {
+				DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_TOPIC_VERSION, batchArgs);
 			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
+				DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_INSERT_TOPIC_VERSION_AUTO_INCREMENT, batchArgs);
 			}
-			int topicVersionId = -1;
-			if (!this.autoIncrementPrimaryKeys() || useBatch) {
-				// manually retrieve next topic version id when using batch
-				// mode or when the database doesn't support generated keys.
-				topicVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_TOPIC_VERSION_SEQUENCE);
-			}
-			for (TopicVersion topicVersion : topicVersions) {
-				if (!this.autoIncrementPrimaryKeys() || useBatch) {
-					// FIXME - if two threads update the database simultaneously then
-					// it is possible that this code could set the topic version ID
-					// to a value that is different from what the database ends up
-					// using.
-					topicVersion.setTopicVersionId(topicVersionId++);
-				}
-				this.prepareTopicVersionStatement(topicVersion, stmt);
-				if (useBatch) {
-					stmt.addBatch();
-				} else {
-					stmt.executeUpdate();
-				}
-				if (this.autoIncrementPrimaryKeys() && !useBatch) {
-					rs = stmt.getGeneratedKeys();
-					if (!rs.next()) {
-						throw new SQLException("Unable to determine auto-generated ID for database record");
-					}
-					topicVersion.setTopicVersionId(rs.getInt(1));
-				}
-			}
-			if (useBatch) {
-				stmt.executeBatch();
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
 	}
 
@@ -1444,47 +1498,39 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertUserBlock(UserBlock userBlock) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_USER_BLOCK);
-				int blockId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_USER_BLOCK_SEQUENCE);
-				userBlock.setBlockId(blockId);
-				stmt.setInt(index++, userBlock.getBlockId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_USER_BLOCK_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			if (userBlock.getWikiUserId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, userBlock.getWikiUserId());
-			}
-			stmt.setString(index++, userBlock.getIpAddress());
-			stmt.setTimestamp(index++, userBlock.getBlockDate());
-			stmt.setTimestamp(index++, userBlock.getBlockEndDate());
-			stmt.setString(index++, userBlock.getBlockReason());
-			stmt.setInt(index++, userBlock.getBlockedByUserId());
-			stmt.setTimestamp(index++, userBlock.getUnblockDate());
-			stmt.setString(index++, userBlock.getUnblockReason());
-			if (userBlock.getUnblockedByUserId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, userBlock.getUnblockedByUserId());
-			}
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				userBlock.setBlockId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types =  (this.autoIncrementPrimaryKeys()) ? new int[9] : new int[10];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[9] : new Object[10];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int blockId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_USER_BLOCK_SEQUENCE);
+			userBlock.setBlockId(blockId);
+			types[index] = Types.INTEGER;
+			args[index++] = blockId;
+		}
+		types[index] = Types.INTEGER;
+		args[index++] = userBlock.getWikiUserId();
+		types[index] = Types.VARCHAR;
+		args[index++] = userBlock.getIpAddress();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = userBlock.getBlockDate();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = userBlock.getBlockEndDate();
+		types[index] = Types.VARCHAR;
+		args[index++] = userBlock.getBlockReason();
+		types[index] = Types.INTEGER;
+		args[index++] = userBlock.getBlockedByUserId();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = userBlock.getUnblockDate();
+		types[index] = Types.VARCHAR;
+		args[index++] = userBlock.getUnblockReason();
+		types[index] = Types.INTEGER;
+		args[index++] = userBlock.getUnblockedByUserId();
+		if (this.autoIncrementPrimaryKeys()) {
+			int blockId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_USER_BLOCK_AUTO_INCREMENT, args, types, "user_block_id");
+			userBlock.setBlockId(blockId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_USER_BLOCK, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1503,35 +1549,31 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertVirtualWiki(VirtualWiki virtualWiki) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_VIRTUAL_WIKI);
-				int virtualWikiId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_VIRTUAL_WIKI_SEQUENCE);
-				virtualWiki.setVirtualWikiId(virtualWikiId);
-				stmt.setInt(index++, virtualWiki.getVirtualWikiId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_VIRTUAL_WIKI_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			stmt.setString(index++, virtualWiki.getName());
-			stmt.setString(index++, (virtualWiki.isDefaultRootTopicName() ? null : virtualWiki.getRootTopicName()));
-			stmt.setString(index++, (virtualWiki.isDefaultLogoImageUrl() ? null : virtualWiki.getLogoImageUrl()));
-			stmt.setString(index++, (virtualWiki.isDefaultMetaDescription() ? null : virtualWiki.getMetaDescription()));
-			stmt.setString(index++, (virtualWiki.isDefaultSiteName() ? null : virtualWiki.getSiteName()));
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				virtualWiki.setVirtualWikiId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[5] : new int[6];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[5] : new Object[6];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int virtualWikiId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_VIRTUAL_WIKI_SEQUENCE);
+			virtualWiki.setVirtualWikiId(virtualWikiId);
+			types[index] = Types.INTEGER;
+			args[index++] = virtualWikiId;
+		}
+		types[index] = Types.VARCHAR;
+		args[index++] = virtualWiki.getName();
+		types[index] = Types.VARCHAR;
+		args[index++] = (virtualWiki.isDefaultRootTopicName() ? null : virtualWiki.getRootTopicName());
+		types[index] = Types.VARCHAR;
+		args[index++] = (virtualWiki.isDefaultLogoImageUrl() ? null : virtualWiki.getLogoImageUrl());
+		types[index] = Types.VARCHAR;
+		args[index++] = (virtualWiki.isDefaultMetaDescription() ? null : virtualWiki.getMetaDescription());
+		types[index] = Types.VARCHAR;
+		args[index++] = (virtualWiki.isDefaultSiteName() ? null : virtualWiki.getSiteName());
+		if (this.autoIncrementPrimaryKeys()) {
+			int virtualWikiId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_VIRTUAL_WIKI_AUTO_INCREMENT, args, types, "virtual_wiki_id");
+			virtualWiki.setVirtualWikiId(virtualWikiId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_VIRTUAL_WIKI, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1551,39 +1593,39 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE);
-				int fileId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_SEQUENCE);
-				wikiFile.setFileId(fileId);
-				stmt.setInt(index++, wikiFile.getFileId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			stmt.setInt(index++, virtualWikiId);
-			stmt.setString(index++, wikiFile.getFileName());
-			stmt.setString(index++, wikiFile.getUrl());
-			stmt.setString(index++, wikiFile.getMimeType());
-			stmt.setInt(index++, wikiFile.getTopicId());
-			stmt.setTimestamp(index++, wikiFile.getDeleteDate());
-			stmt.setInt(index++, (wikiFile.getReadOnly() ? 1 : 0));
-			stmt.setInt(index++, (wikiFile.getAdminOnly() ? 1 : 0));
-			stmt.setLong(index++, wikiFile.getFileSize());
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				wikiFile.setFileId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[9] : new int[10];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[9] : new Object[10];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int fileId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_SEQUENCE);
+			wikiFile.setFileId(fileId);
+			types[index] = Types.INTEGER;
+			args[index++] = fileId;
+		}
+		types[index] = Types.INTEGER;
+		args[index++] = virtualWikiId;
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFile.getFileName();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFile.getUrl();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFile.getMimeType();
+		types[index] = Types.INTEGER;
+		args[index++] = wikiFile.getTopicId();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = wikiFile.getDeleteDate();
+		types[index] = Types.INTEGER;
+		args[index++] = (wikiFile.getReadOnly() ? 1 : 0);
+		types[index] = Types.INTEGER;
+		args[index++] = (wikiFile.getAdminOnly() ? 1 : 0);
+		types[index] = Types.BIGINT;
+		args[index++] = wikiFile.getFileSize();
+		if (this.autoIncrementPrimaryKeys()) {
+			int fileId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_WIKI_FILE_AUTO_INCREMENT, args, types, "file_id");
+			wikiFile.setFileId(fileId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_WIKI_FILE, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1591,46 +1633,41 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertWikiFileVersion(WikiFileVersion wikiFileVersion) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE_VERSION);
-				int fileVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_VERSION_SEQUENCE);
-				wikiFileVersion.setFileVersionId(fileVersionId);
-				stmt.setInt(index++, wikiFileVersion.getFileVersionId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_FILE_VERSION_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			if (wikiFileVersion.getUploadDate() == null) {
-				Timestamp uploadDate = new Timestamp(System.currentTimeMillis());
-				wikiFileVersion.setUploadDate(uploadDate);
-			}
-			stmt.setInt(index++, wikiFileVersion.getFileId());
-			stmt.setString(index++, wikiFileVersion.getUploadComment());
-			stmt.setString(index++, wikiFileVersion.getUrl());
-			if (wikiFileVersion.getAuthorId() == null) {
-				stmt.setNull(index++, Types.INTEGER);
-			} else {
-				stmt.setInt(index++, wikiFileVersion.getAuthorId());
-			}
-			stmt.setString(index++, wikiFileVersion.getAuthorDisplay());
-			stmt.setTimestamp(index++, wikiFileVersion.getUploadDate());
-			stmt.setString(index++, wikiFileVersion.getMimeType());
-			stmt.setLong(index++, wikiFileVersion.getFileSize());
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				wikiFileVersion.setFileVersionId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		if (wikiFileVersion.getUploadDate() == null) {
+			Timestamp uploadDate = new Timestamp(System.currentTimeMillis());
+			wikiFileVersion.setUploadDate(uploadDate);
+		}
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[8] : new int[9];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[8] : new Object[9];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int fileVersionId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_FILE_VERSION_SEQUENCE);
+			wikiFileVersion.setFileVersionId(fileVersionId);
+			types[index] = Types.INTEGER;
+			args[index++] = fileVersionId;
+		}
+		types[index] = Types.INTEGER;
+		args[index++] = wikiFileVersion.getFileId();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFileVersion.getUploadComment();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFileVersion.getUrl();
+		types[index] = Types.INTEGER;
+		args[index++] = wikiFileVersion.getAuthorId();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFileVersion.getAuthorDisplay();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = wikiFileVersion.getUploadDate();
+		types[index] = Types.VARCHAR;
+		args[index++] = wikiFileVersion.getMimeType();
+		types[index] = Types.BIGINT;
+		args[index++] = wikiFileVersion.getFileSize();
+		if (this.autoIncrementPrimaryKeys()) {
+			int fileVersionId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_WIKI_FILE_VERSION_AUTO_INCREMENT, args, types, "file_version_id");
+			wikiFileVersion.setFileVersionId(fileVersionId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_WIKI_FILE_VERSION, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1638,32 +1675,25 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertWikiGroup(WikiGroup group) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP);
-				int groupId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_SEQUENCE);
-				group.setGroupId(groupId);
-				stmt.setInt(index++, group.getGroupId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_GROUP_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			stmt.setString(index++, group.getName());
-			stmt.setString(index++, group.getDescription());
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				group.setGroupId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[2] : new int[3];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[2] : new Object[3];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int groupId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_GROUP_SEQUENCE);
+			group.setGroupId(groupId);
+			types[index] = Types.INTEGER;
+			args[index++] = groupId;
+		}
+		types[index] = Types.VARCHAR;
+		args[index++] = group.getName();
+		types[index] = Types.VARCHAR;
+		args[index++] = group.getDescription();
+		if (this.autoIncrementPrimaryKeys()) {
+			int groupId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_GROUP_AUTO_INCREMENT, args, types, "group_id");
+			group.setGroupId(groupId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_GROUP, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -1671,37 +1701,35 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void insertWikiUser(WikiUser user) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			int index = 1;
-			if (!this.autoIncrementPrimaryKeys()) {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_USER);
-				int nextUserId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_USER_SEQUENCE);
-				user.setUserId(nextUserId);
-				stmt.setInt(index++, user.getUserId());
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_INSERT_WIKI_USER_AUTO_INCREMENT, Statement.RETURN_GENERATED_KEYS);
-			}
-			stmt.setString(index++, user.getUsername());
-			stmt.setString(index++, user.getDisplayName());
-			stmt.setTimestamp(index++, user.getCreateDate());
-			stmt.setTimestamp(index++, user.getLastLoginDate());
-			stmt.setString(index++, user.getCreateIpAddress());
-			stmt.setString(index++, user.getLastLoginIpAddress());
-			stmt.setString(index++, user.getEmail());
-			stmt.executeUpdate();
-			if (this.autoIncrementPrimaryKeys()) {
-				rs = stmt.getGeneratedKeys();
-				if (!rs.next()) {
-					throw new SQLException("Unable to determine auto-generated ID for database record");
-				}
-				user.setUserId(rs.getInt(1));
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[7] : new int[8];
+		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[7] : new Object[8];
+		int index = 0;
+		if (!this.autoIncrementPrimaryKeys()) {
+			int userId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_WIKI_USER_SEQUENCE);
+			user.setUserId(userId);
+			types[index] = Types.INTEGER;
+			args[index++] = userId;
+		}
+		types[index] = Types.VARCHAR;
+		args[index++] = user.getUsername();
+		types[index] = Types.VARCHAR;
+		args[index++] = user.getDisplayName();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = user.getCreateDate();
+		types[index] = Types.TIMESTAMP;
+		args[index++] = user.getLastLoginDate();
+		types[index] = Types.VARCHAR;
+		args[index++] = user.getCreateIpAddress();
+		types[index] = Types.VARCHAR;
+		args[index++] = user.getLastLoginIpAddress();
+		types[index] = Types.VARCHAR;
+		args[index++] = user.getEmail();
+		if (this.autoIncrementPrimaryKeys()) {
+			int userId = this.executeGeneratedKeyInsert(STATEMENT_INSERT_WIKI_USER_AUTO_INCREMENT, args, types, "wiki_user_id");
+			user.setUserId(userId);
+		} else {
+			PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(STATEMENT_INSERT_WIKI_USER, types);
+			DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args));
 		}
 	}
 
@@ -2313,37 +2341,6 @@ public class AnsiQueryHandler implements QueryHandler {
 		topic.setCurrentVersionId(previousTopicVersionId);
 		topic.setTopicContent(topicVersion.getVersionContent());
 		this.updateTopic(topic, virtualWikiId);
-	}
-
-	/**
-	 *
-	 */
-	protected void prepareTopicVersionStatement(TopicVersion topicVersion, PreparedStatement stmt) throws SQLException {
-		int index = 1;
-		if (!this.autoIncrementPrimaryKeys()) {
-			stmt.setInt(index++, topicVersion.getTopicVersionId());
-		}
-		if (topicVersion.getEditDate() == null) {
-			topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
-		}
-		stmt.setInt(index++, topicVersion.getTopicId());
-		stmt.setString(index++, topicVersion.getEditComment());
-		stmt.setString(index++, topicVersion.getVersionContent());
-		if (topicVersion.getAuthorId() == null) {
-			stmt.setNull(index++, Types.INTEGER);
-		} else {
-			stmt.setInt(index++, topicVersion.getAuthorId());
-		}
-		stmt.setInt(index++, topicVersion.getEditType());
-		stmt.setString(index++, topicVersion.getAuthorDisplay());
-		stmt.setTimestamp(index++, topicVersion.getEditDate());
-		if (topicVersion.getPreviousTopicVersionId() == null) {
-			stmt.setNull(index++, Types.INTEGER);
-		} else {
-			stmt.setInt(index++, topicVersion.getPreviousTopicVersionId());
-		}
-		stmt.setInt(index++, topicVersion.getCharactersChanged());
-		stmt.setString(index++, topicVersion.getVersionParamString());
 	}
 
 	/**
