@@ -20,7 +20,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.MessageFormat;
@@ -693,84 +692,72 @@ public class AnsiQueryHandler implements QueryHandler {
 		if (StringUtils.isBlank(loginFragment)) {
 			return new ArrayList<RoleMap>();
 		}
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_AUTHORITIES_LOGIN);
-			loginFragment = '%' + loginFragment.toLowerCase() + '%';
-			stmt.setString(1, loginFragment);
-			rs = stmt.executeQuery();
-			LinkedHashMap<Integer, RoleMap> roleMaps = new LinkedHashMap<Integer, RoleMap>();
-			while (rs.next()) {
-				Integer userId = rs.getInt("wiki_user_id");
-				RoleMap roleMap = new RoleMap();
-				if (roleMaps.containsKey(userId)) {
-					roleMap = roleMaps.get(userId);
-				} else {
-					roleMap.setUserId(userId);
-					roleMap.setUserLogin(rs.getString("username"));
-				}
-				roleMap.addRole(rs.getString("authority"));
-				roleMaps.put(userId, roleMap);
+		loginFragment = '%' + loginFragment.toLowerCase() + '%';
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_AUTHORITIES_LOGIN,
+				loginFragment
+		);
+		LinkedHashMap<Integer, RoleMap> roleMaps = new LinkedHashMap<Integer, RoleMap>();
+		for (Map<String, Object> result : results) {
+			Integer userId = (Integer)result.get("wiki_user_id");
+			RoleMap roleMap = new RoleMap();
+			if (roleMaps.containsKey(userId)) {
+				roleMap = roleMaps.get(userId);
+			} else {
+				roleMap.setUserId(userId);
+				roleMap.setUserLogin((String)result.get("username"));
 			}
-			return new ArrayList<RoleMap>(roleMaps.values());
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			roleMap.addRole((String)result.get("authority"));
+			roleMaps.put(userId, roleMap);
 		}
+		return new ArrayList<RoleMap>(roleMaps.values());
 	}
 
 	/**
 	 *
 	 */
 	public List<RoleMap> getRoleMapByRole(String authority,boolean includeInheritedRoles) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			if (includeInheritedRoles) {
-				stmt = conn.prepareStatement(STATEMENT_SELECT_AUTHORITIES_AUTHORITY_ALL);
-				stmt.setString(1, authority);
-				stmt.setString(2, authority);
-				stmt.setString(3, authority);
-				stmt.setString(4, authority);
-			} else {
-				stmt = conn.prepareStatement(STATEMENT_SELECT_AUTHORITIES_AUTHORITY);
-				stmt.setString(1, authority);
-				stmt.setString(2, authority);
-			}
-			rs = stmt.executeQuery();
-			LinkedHashMap<String, RoleMap> roleMaps = new LinkedHashMap<String, RoleMap>();
-			while (rs.next()) {
-				int userId = rs.getInt("wiki_user_id");
-				int groupId = rs.getInt("group_id");
-				RoleMap roleMap = new RoleMap();
-				String key = userId + "|" + groupId;
-				if (roleMaps.containsKey(key)) {
-					roleMap = roleMaps.get(key);
-				} else {
-					if (userId > 0) {
-						roleMap.setUserId(userId);
-						roleMap.setUserLogin(rs.getString("username"));
-					}
-					if (groupId > 0) {
-						roleMap.setGroupId(groupId);
-						roleMap.setGroupName(rs.getString("group_name"));
-					}
-				}
-				String roleName = rs.getString("authority");
-				if (roleName != null) {
-					roleMap.addRole(roleName);
-				}
-				// roleMap.addRole(rs.getString("authority"));
-				roleMaps.put(key, roleMap);
-			}
-			return new ArrayList<RoleMap>(roleMaps.values());
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		List<Map<String, Object>> results = null;
+		if (includeInheritedRoles) {
+			results = DatabaseConnection.getJdbcTemplate().queryForList(
+					STATEMENT_SELECT_AUTHORITIES_AUTHORITY_ALL,
+					authority,
+					authority,
+					authority,
+					authority
+			);
+		} else {
+			results = DatabaseConnection.getJdbcTemplate().queryForList(
+					STATEMENT_SELECT_AUTHORITIES_AUTHORITY,
+					authority,
+					authority
+			);
 		}
+		LinkedHashMap<String, RoleMap> roleMaps = new LinkedHashMap<String, RoleMap>();
+		for (Map<String, Object> result : results) {
+			int userId = (Integer)result.get("wiki_user_id");
+			int groupId = (Integer)result.get("group_id");
+			RoleMap roleMap = new RoleMap();
+			String key = userId + "|" + groupId;
+			if (roleMaps.containsKey(key)) {
+				roleMap = roleMaps.get(key);
+			} else {
+				if (userId > 0) {
+					roleMap.setUserId(userId);
+					roleMap.setUserLogin((String)result.get("username"));
+				}
+				if (groupId > 0) {
+					roleMap.setGroupId(groupId);
+					roleMap.setGroupName((String)result.get("group_name"));
+				}
+			}
+			String roleName = (String)result.get("authority");
+			if (roleName != null) {
+				roleMap.addRole(roleName);
+			}
+			roleMaps.put(key, roleMap);
+		}
+		return new ArrayList<RoleMap>(roleMaps.values());
 	}
 
 	/**
@@ -785,30 +772,23 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<RoleMap> getRoleMapGroups() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_GROUPS_AUTHORITIES);
-			rs = stmt.executeQuery();
-			LinkedHashMap<Integer, RoleMap> roleMaps = new LinkedHashMap<Integer, RoleMap>();
-			while (rs.next()) {
-				Integer groupId = rs.getInt("group_id");
-				RoleMap roleMap = new RoleMap();
-				if (roleMaps.containsKey(groupId)) {
-					roleMap = roleMaps.get(groupId);
-				} else {
-					roleMap.setGroupId(groupId);
-					roleMap.setGroupName(rs.getString("group_name"));
-				}
-				roleMap.addRole(rs.getString("authority"));
-				roleMaps.put(groupId, roleMap);
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_GROUPS_AUTHORITIES
+		);
+		LinkedHashMap<Integer, RoleMap> roleMaps = new LinkedHashMap<Integer, RoleMap>();
+		for (Map<String, Object> result : results) {
+			Integer groupId = (Integer)result.get("group_id");
+			RoleMap roleMap = new RoleMap();
+			if (roleMaps.containsKey(groupId)) {
+				roleMap = roleMaps.get(groupId);
+			} else {
+				roleMap.setGroupId(groupId);
+				roleMap.setGroupName((String)result.get("group_name"));
 			}
-			return new ArrayList<RoleMap>(roleMaps.values());
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			roleMap.addRole((String)result.get("authority"));
+			roleMaps.put(groupId, roleMap);
 		}
+		return new ArrayList<RoleMap>(roleMaps.values());
 	}
 
 	/**
@@ -837,32 +817,27 @@ public class AnsiQueryHandler implements QueryHandler {
 	 * 
 	 */
 	public LinkedHashMap<String, Map<String, String>> getUserPreferencesDefaults() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS);
-			rs = stmt.executeQuery();
-			// the map of groups containing the maps to their preferences
-			LinkedHashMap<String, Map<String, String>> groups = new LinkedHashMap<String, Map<String, String>>();
-			LinkedHashMap<String, String> defaultPreferences = null;
-			String lastGroup = null;
-			while (rs.next()) {
-				// get the group name
-				String group = rs.getString(3);
-				// test if we need a new list of items for a new group
-				if (group != null && (lastGroup == null || !lastGroup.equals(group))) {
-					lastGroup = group;
-					defaultPreferences = new LinkedHashMap<String, String>();
-				}
-				defaultPreferences.put(rs.getString(1), rs.getString(2));
-				groups.put(group, defaultPreferences);
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS
+		);
+		// the map of groups containing the maps to their preferences
+		LinkedHashMap<String, Map<String, String>> groups = new LinkedHashMap<String, Map<String, String>>();
+		LinkedHashMap<String, String> defaultPreferences = null;
+		String lastGroup = null;
+		for (Map<String, Object> result : results) {
+			// get the group name
+			String group = (String)result.get("pref_group_key");
+			// test if we need a new list of items for a new group
+			if (group != null && (lastGroup == null || !lastGroup.equals(group))) {
+				lastGroup = group;
+				defaultPreferences = new LinkedHashMap<String, String>();
 			}
-			return groups;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			String key = (String)result.get("pref_key");
+			String value = (String)result.get("pref_value");
+			defaultPreferences.put(key, value);
+			groups.put(group, defaultPreferences);
 		}
+		return groups;
 	}
 
 	/**
@@ -1783,22 +1758,17 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public Map<String, String> lookupConfiguration() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_CONFIGURATION
+		);
 		Map<String, String> configuration = new HashMap<String, String>();
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_CONFIGURATION);
-			rs = stmt.executeQuery();
-			while (rs.next()) {
-				// note that the value must be trimmed since Oracle cannot store empty
-				// strings (it converts them to NULL) so empty config values are stored
-				// as " ".
-				configuration.put(rs.getString("config_key"), rs.getString("config_value").trim());
-			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		for (Map<String, Object> result : results) {
+			// note that the value must be trimmed since Oracle cannot store empty
+			// strings (it converts them to NULL) so empty config values are stored
+			// as " ".
+			String key = (String)result.get("config_key");
+			String value = (String)result.get("config_value");
+			configuration.put(key, value.trim());
 		}
 		return configuration;
 	}
@@ -1814,47 +1784,40 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<Namespace> lookupNamespaces() throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_NAMESPACES
+		);
 		Map<Integer, Namespace> namespaces = new TreeMap<Integer, Namespace>();
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_NAMESPACES);
-			rs = stmt.executeQuery();
-			// because there is no consistent way to sort null keys, get all data and then
-			// create Namespace objects by initializing main namespaces first, then the talk
-			// namespaces that reference the main namespace.
-			Map<Integer, Namespace> talkNamespaces = new HashMap<Integer, Namespace>();
-			while (rs.next()) {
-				int namespaceId = rs.getInt("namespace_id");
-				Namespace namespace = namespaces.get(namespaceId);
-				if (namespace == null) {
-					String namespaceLabel = rs.getString("namespace");
-					namespace = new Namespace(namespaceId, namespaceLabel);
-				}
-				String virtualWiki = rs.getString("virtual_wiki_name");
-				String namespaceTranslation = rs.getString("namespace_translation");
-				if (virtualWiki != null) {
-					namespace.getNamespaceTranslations().put(virtualWiki, namespaceTranslation);
-				}
-				namespaces.put(namespaceId, namespace);
-				int mainNamespaceId = rs.getInt("main_namespace_id");
-				if (!rs.wasNull()) {
-					talkNamespaces.put(mainNamespaceId, namespace);
-				}
+		// because there is no consistent way to sort null keys, get all data and then
+		// create Namespace objects by initializing main namespaces first, then the talk
+		// namespaces that reference the main namespace.
+		Map<Integer, Namespace> talkNamespaces = new HashMap<Integer, Namespace>();
+		for (Map<String, Object> result : results) {
+			int namespaceId = (Integer)result.get("namespace_id");
+			Namespace namespace = namespaces.get(namespaceId);
+			if (namespace == null) {
+				String namespaceLabel = (String)result.get("namespace");
+				namespace = new Namespace(namespaceId, namespaceLabel);
 			}
-			for (Map.Entry<Integer, Namespace> entry : talkNamespaces.entrySet()) {
-				Namespace mainNamespace = namespaces.get(entry.getKey());
-				if (mainNamespace == null) {
-					logger.warn("Invalid namespace reference - bad database data.  Namespace references invalid main namespace with ID " + entry.getKey());
-				}
-				Namespace talkNamespace = entry.getValue();
-				talkNamespace.setMainNamespaceId(mainNamespace.getId());
-				namespaces.put(talkNamespace.getId(), talkNamespace);
+			String virtualWiki = (String)result.get("virtual_wiki_name");
+			String namespaceTranslation = (String)result.get("namespace_translation");
+			if (virtualWiki != null) {
+				namespace.getNamespaceTranslations().put(virtualWiki, namespaceTranslation);
 			}
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+			namespaces.put(namespaceId, namespace);
+			Integer mainNamespaceId = (Integer)result.get("main_namespace_id");
+			if (mainNamespaceId != null) {
+				talkNamespaces.put(mainNamespaceId, namespace);
+			}
+		}
+		for (Map.Entry<Integer, Namespace> entry : talkNamespaces.entrySet()) {
+			Namespace mainNamespace = namespaces.get(entry.getKey());
+			if (mainNamespace == null) {
+				logger.warn("Invalid namespace reference - bad database data.  Namespace references invalid main namespace with ID " + entry.getKey());
+			}
+			Namespace talkNamespace = entry.getValue();
+			talkNamespace.setMainNamespaceId(mainNamespace.getId());
+			namespaces.put(talkNamespace.getId(), talkNamespace);
 		}
 		return new ArrayList<Namespace>(namespaces.values());
 	}
@@ -1976,29 +1939,22 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public List<String[]> lookupTopicLinks(int virtualWikiId, Topic topic) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_LINKS);
-			stmt.setInt(1, virtualWikiId);
-			stmt.setInt(2, topic.getNamespace().getId());
-			stmt.setString(3, topic.getPageName());
-			stmt.setInt(4, virtualWikiId);
-			stmt.setString(5, topic.getName());
-			rs = stmt.executeQuery();
-			List<String[]> results = new ArrayList<String[]>();
-			while (rs.next()) {
-				String[] element = new String[2];
-				element[0] = rs.getString("topic_name");
-				element[1] = rs.getString("child_topic_name");
-				results.add(element);
-			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_TOPIC_LINKS,
+				virtualWikiId,
+				topic.getNamespace().getId(),
+				topic.getPageName(),
+				virtualWikiId,
+				topic.getName()
+		);
+		List<String[]> topicLinks = new ArrayList<String[]>();
+		for (Map<String, Object> result : results) {
+			String[] element = new String[2];
+			element[0] = (String)result.get("topic_name");
+			element[1] = (String)result.get("child_topic_name");
+			topicLinks.add(element);
 		}
+		return topicLinks;
 	}
 
 	/**
@@ -2013,24 +1969,17 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_NAMES);
-			stmt.setInt(1, virtualWikiId);
-			rs = stmt.executeQuery();
-			Map<Integer, String> results = new LinkedHashMap<Integer, String>();
-			while (rs.next()) {
-				if (includeDeleted || rs.getTimestamp("delete_date") == null) {
-					results.put(rs.getInt("topic_id"), rs.getString("topic_name"));
-				}
+		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
+				STATEMENT_SELECT_TOPIC_NAMES,
+				virtualWikiId
+		);
+		Map<Integer, String> topicNames = new LinkedHashMap<Integer, String>();
+		for (Map<String, Object> result : results) {
+			if (includeDeleted || (Timestamp)result.get("delete_date") == null) {
+				topicNames.put((Integer)result.get("topic_id"), (String)result.get("topic_name"));
 			}
-			return results;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
+		return topicNames;
 	}
 
 	/**
@@ -2378,35 +2327,26 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void updateNamespace(Namespace namespace) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			// update if the ID is specified AND a namespace with the same ID already exists
-			boolean isUpdate = (namespace.getId() != null && this.lookupNamespaces().indexOf(namespace) != -1);
-			// if adding determine the namespace ID(s)
-			if (!isUpdate && namespace.getId() == null) {
-				// note - this returns the last id in the system, so add one
-				int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_NAMESPACE_SEQUENCE);
-				if (nextId < 200) {
-					// custom namespaces start with IDs of 200 or more to leave room for future expansion
-					nextId = 200;
-				}
-				namespace.setId(nextId);
+		// update if the ID is specified AND a namespace with the same ID already exists
+		boolean isUpdate = (namespace.getId() != null && this.lookupNamespaces().indexOf(namespace) != -1);
+		// if adding determine the namespace ID(s)
+		if (!isUpdate && namespace.getId() == null) {
+			// note - this returns the last id in the system, so add one
+			int nextId = DatabaseConnection.executeSequenceQuery(STATEMENT_SELECT_NAMESPACE_SEQUENCE);
+			if (nextId < 200) {
+				// custom namespaces start with IDs of 200 or more to leave room for future expansion
+				nextId = 200;
 			}
-			// execute the adds/updates
-			stmt = (isUpdate) ? conn.prepareStatement(STATEMENT_UPDATE_NAMESPACE) : conn.prepareStatement(STATEMENT_INSERT_NAMESPACE);
-			stmt.setString(1, namespace.getDefaultLabel());
-			if (namespace.getMainNamespaceId() != null) {
-				stmt.setInt(2, namespace.getMainNamespaceId());
-			} else {
-				stmt.setNull(2, Types.INTEGER);
-			}
-			stmt.setInt(3, namespace.getId());
-			stmt.executeUpdate();
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, null);
+			namespace.setId(nextId);
 		}
+		// execute the adds/updates
+		String sql = (isUpdate) ? STATEMENT_UPDATE_NAMESPACE : STATEMENT_INSERT_NAMESPACE;
+		DatabaseConnection.getJdbcTemplate().update(
+				sql,
+				namespace.getDefaultLabel(),
+				namespace.getMainNamespaceId(),
+				namespace.getId()
+		);
 	}
 
 	/**
@@ -2469,21 +2409,17 @@ public class AnsiQueryHandler implements QueryHandler {
 	 *
 	 */
 	public void updateTopicNamespaces(List<Topic> topics) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_UPDATE_TOPIC_NAMESPACE);
-			for (Topic topic : topics) {
-				stmt.setInt(1, topic.getNamespace().getId());
-				stmt.setString(2, topic.getPageName());
-				stmt.setString(3, topic.getPageName().toLowerCase());
-				stmt.setInt(4, topic.getTopicId());
-				stmt.addBatch();
-			}
-			stmt.executeBatch();
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, null);
+		List<Object[]> batchArgs = new ArrayList<Object[]>();
+		for (Topic topic : topics) {
+			Object[] args = {
+					topic.getNamespace().getId(),
+					topic.getPageName(),
+					topic.getPageName().toLowerCase(),
+					topic.getTopicId()
+			};
+		}
+		if (!batchArgs.isEmpty()) {
+			DatabaseConnection.getJdbcTemplate().batchUpdate(STATEMENT_UPDATE_TOPIC_NAMESPACE, batchArgs);
 		}
 	}
 
