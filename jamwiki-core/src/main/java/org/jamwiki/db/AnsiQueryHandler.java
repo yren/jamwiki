@@ -549,7 +549,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			stmt = conn.prepareStatement(sql);
 			stmt.executeQuery();
 		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+			DatabaseConnection.closeConnection(conn, stmt, null);
 		}
 	}
 
@@ -2405,7 +2405,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			stmt.setInt(3, namespace.getId());
 			stmt.executeUpdate();
 		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+			DatabaseConnection.closeConnection(conn, stmt, null);
 		}
 	}
 
@@ -2483,7 +2483,7 @@ public class AnsiQueryHandler implements QueryHandler {
 			}
 			stmt.executeBatch();
 		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+			DatabaseConnection.closeConnection(conn, stmt, null);
 		}
 	}
 

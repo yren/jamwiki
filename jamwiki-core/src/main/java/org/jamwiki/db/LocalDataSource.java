@@ -81,7 +81,7 @@ public class LocalDataSource extends BasicDataSource {
 			}
 			throw new IllegalArgumentException("Invalid SQL connection settings: " + ex.getMessage());
 		} finally {
-			DatabaseConnection.closeConnection(testConnection);
+			DatabaseConnection.closeConnection(testConnection, null, null);
 		}
 		// the ConnectionPool is now initialised, so we can set the dbcp-when-exhausted-action
 		connectionPool.setWhenExhaustedAction((byte) Environment.getIntValue(Environment.PROP_DBCP_WHEN_EXHAUSTED_ACTION));

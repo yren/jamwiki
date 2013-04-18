@@ -527,7 +527,7 @@ public class WikiDatabase {
 		try {
 			conn.commit();
 		} finally {
-			DatabaseConnection.closeConnection(conn);
+			DatabaseConnection.closeConnection(conn, null, null);
 		}
 	}
 
@@ -590,7 +590,7 @@ public class WikiDatabase {
 							rollbackAfterSetupFailure();
 							throw new TransactionRuntimeException(e);
 						} finally {
-							DatabaseConnection.closeConnection(conn);
+							DatabaseConnection.closeConnection(conn, null, null);
 						}
 					}
 				}
@@ -613,7 +613,7 @@ public class WikiDatabase {
 		} catch (Exception e) {
 			// ignore, things have failed already
 		} finally {
-			DatabaseConnection.closeConnection(conn);
+			DatabaseConnection.closeConnection(conn, null, null);
 		}
 	}
 

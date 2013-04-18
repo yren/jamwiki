@@ -69,39 +69,15 @@ public class DatabaseConnection {
 	 * @param rs A result set object that is to be closed.  May be <code>null</code>.
 	 */
 	protected static void closeConnection(Connection conn, Statement stmt, ResultSet rs) {
-		DatabaseConnection.closeResultSet(rs);
-		DatabaseConnection.closeConnection(conn, stmt);
-	}
-
-	/**
-	 * Utility method for closing a database connection and a statement.  This method
-	 * must ALWAYS be called for any connection retrieved by the
-	 * {@link DatabaseConnection#getConnection getConnection()} method, and the
-	 * connection SHOULD NOT have already been closed.
-	 *
-	 * @param conn A database connection, retrieved using DatabaseConnection.getConnection(),
-	 *  that is to be closed.  This connection SHOULD NOT have been previously closed.
-	 * @param stmt A statement object that is to be closed.  May be <code>null</code>.
-	 */
-	protected static void closeConnection(Connection conn, Statement stmt) {
-		DatabaseConnection.closeStatement(stmt);
-		DatabaseConnection.closeConnection(conn);
-	}
-
-	/**
-	 * Utility method for closing a database connection.  This method must ALWAYS be
-	 * called for any connection retrieved by the
-	 * {@link DatabaseConnection#getConnection getConnection()} method, and the
-	 * connection SHOULD NOT have already been closed.
-	 *
-	 * @param conn A database connection, retrieved using DatabaseConnection.getConnection(),
-	 *  that is to be closed.  This connection SHOULD NOT have been previously closed.
-	 */
-	protected static void closeConnection(Connection conn) {
-		if (conn == null) {
-			return;
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (SQLException e) {}
 		}
-		DataSourceUtils.releaseConnection(conn, dataSource);
+		DatabaseConnection.closeStatement(stmt);
+		if (conn != null) {
+			DataSourceUtils.releaseConnection(conn, dataSource);
+		}
 	}
 
 	/**
@@ -128,20 +104,6 @@ public class DatabaseConnection {
 		// clear references to prevent them being reused (& allow garbage collection)
 		dataSource = null;
 		transactionManager = null;
-	}
-
-	/**
-	 * Utility method for closing a result set that may or may not be <code>null</code>.
-	 * The result set SHOULD NOT have already been closed.
-	 *
-	 * @param rs A statement object that is to be closed.  May be <code>null</code>.
-	 */
-	protected static void closeResultSet(ResultSet rs) {
-		if (rs != null) {
-			try {
-				rs.close();
-			} catch (SQLException e) {}
-		}
 	}
 
 	/**
@@ -307,7 +269,7 @@ public class DatabaseConnection {
 				stmt.executeQuery(queryHandler.existenceValidationQuery());
 			}
 		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+			DatabaseConnection.closeConnection(conn, stmt, null);
 			// explicitly null the variable to improve garbage collection.
 			// with very large loops this can help avoid OOM "GC overhead
 			// limit exceeded" errors.

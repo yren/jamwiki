@@ -1838,7 +1838,7 @@ public class AnsiDataHandler {
 		} catch (SQLException e) {
 			// database not yet set up
 		} finally {
-			DatabaseConnection.closeConnection(conn, stmt);
+			DatabaseConnection.closeConnection(conn, stmt, null);
 			// explicitly null the variable to improve garbage collection.
 			// with very large loops this can help avoid OOM "GC overhead
 			// limit exceeded" errors.
