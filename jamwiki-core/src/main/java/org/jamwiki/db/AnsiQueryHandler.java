@@ -1153,43 +1153,6 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 * Initialize the topic record.
-	 *
-	 * @param rs The result set being used to initialize the record.
-	 */
-	private Topic initTopic(ResultSet rs) throws SQLException {
-		Topic topic = new Topic(rs.getString("virtual_wiki_name"), Namespace.namespace(rs.getInt("namespace_id")), rs.getString("page_name"));
-		topic.setAdminOnly(rs.getInt("topic_admin_only") != 0);
-		int currentVersionId = rs.getInt("current_version_id");
-		if (currentVersionId > 0) {
-			topic.setCurrentVersionId(currentVersionId);
-		}
-		topic.setTopicContent(rs.getString("version_content"));
-		// FIXME - Oracle cannot store an empty string - it converts them
-		// to null - so add a hack to work around the problem.
-		if (topic.getTopicContent() == null) {
-			topic.setTopicContent("");
-		}
-		topic.setTopicId(rs.getInt("topic_id"));
-		topic.setReadOnly(rs.getInt("topic_read_only") != 0);
-		topic.setDeleteDate(rs.getTimestamp("delete_date"));
-		topic.setTopicType(TopicType.findTopicType(rs.getInt("topic_type")));
-		topic.setRedirectTo(rs.getString("redirect_to"));
-		// if a topic by this name has been deleted then there will be multiple results and
-		// the one we want is the last one.  due to the fact that the result set may be
-		// FORWARD_ONLY re-run this method for the remaining available results in the result
-		// set - it's inefficient, but safe.
-		if (rs.getTimestamp("delete_date") != null) {
-			// this is an inefficient way to get the last result, but due to the fact that
-			// the result set may be forward only it's the safest.
-			if (rs.next()) {
-				topic = this.initTopic(rs);
-			}
-		}
-		return topic;
-	}
-
-	/**
 	 *
 	 */
 	public void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId) throws SQLException {
@@ -1830,50 +1793,43 @@ public class AnsiQueryHandler implements QueryHandler {
 			// invalid namespace
 			return null;
 		}
-		Connection conn = null;
-		PreparedStatement stmt1 = null;
-		PreparedStatement stmt2 = null;
-		ResultSet rs = null;
+		Object[] args = {
+				pageName,
+				virtualWikiId,
+				namespace.getId()
+		};
 		Topic topic = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt1 = conn.prepareStatement(STATEMENT_SELECT_TOPIC);
-			stmt1.setString(1, pageName);
-			stmt1.setInt(2, virtualWikiId);
-			stmt1.setInt(3, namespace.getId());
-			rs = stmt1.executeQuery();
-			topic = (rs.next() ? this.initTopic(rs) : null);
-			if (topic == null && !namespace.isCaseSensitive() && !pageName.toLowerCase().equals(pageName)) {
-				stmt2 = conn.prepareStatement(STATEMENT_SELECT_TOPIC_LOWER);
-				stmt2.setString(1, pageName.toLowerCase());
-				stmt2.setInt(2, virtualWikiId);
-				stmt2.setInt(3, namespace.getId());
-				rs = stmt2.executeQuery();
-				topic = (rs.next() ? this.initTopic(rs) : null);
-			}
-			return topic;
-		} finally {
-			DatabaseConnection.closeStatement(stmt1);
-			DatabaseConnection.closeConnection(conn, stmt2, rs);
+		List<Topic> topics = DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_TOPIC, args, new TopicMapper());
+		if (topics != null && !topics.isEmpty()) {
+			// if there are deleted topics then multiple results are returned,
+			// so use the last (non-deleted) result
+			topic = topics.get(topics.size() - 1);
 		}
+		if (topic == null && !namespace.isCaseSensitive() && !pageName.toLowerCase().equals(pageName)) {
+			args[0] = pageName.toLowerCase();
+			topics = DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_TOPIC_LOWER, args, new TopicMapper());
+			if (topics != null && !topics.isEmpty()) {
+				// if there are deleted topics then multiple results are returned,
+				// so use the last (non-deleted) result
+				topic = topics.get(topics.size() - 1);
+			}
+		}
+		return topic;
 	}
 
 	/**
 	 *
 	 */
 	public Topic lookupTopicById(int topicId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.prepareStatement(STATEMENT_SELECT_TOPIC_BY_ID);
-			stmt.setInt(1, topicId);
-			rs = stmt.executeQuery();
-			return (rs.next()) ? this.initTopic(rs) : null;
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, rs);
+		Object[] args = { topicId };
+		Topic topic = null;
+		List<Topic> topics = DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_TOPIC_BY_ID, args, new TopicMapper());
+		if (topics != null && !topics.isEmpty()) {
+			// if there are deleted topics then multiple results are returned,
+			// so use the last (non-deleted) result
+			topic = topics.get(topics.size() - 1);
 		}
+		return topic;
 	}
 
 	/**
@@ -2835,6 +2791,36 @@ public class AnsiQueryHandler implements QueryHandler {
 			Role role = new Role(rs.getString("role_name"));
 			role.setDescription(rs.getString("role_description"));
 			return role;
+		}
+	}
+
+	/**
+	 * Inner class for converting result set to topic.
+	 */
+	static final class TopicMapper implements RowMapper<Topic> {
+
+		/**
+		 *
+		 */
+		public Topic mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Topic topic = new Topic(rs.getString("virtual_wiki_name"), Namespace.namespace(rs.getInt("namespace_id")), rs.getString("page_name"));
+			topic.setAdminOnly(rs.getInt("topic_admin_only") != 0);
+			int currentVersionId = rs.getInt("current_version_id");
+			if (currentVersionId > 0) {
+				topic.setCurrentVersionId(currentVersionId);
+			}
+			topic.setTopicContent(rs.getString("version_content"));
+			// FIXME - Oracle cannot store an empty string - it converts them
+			// to null - so add a hack to work around the problem.
+			if (topic.getTopicContent() == null) {
+				topic.setTopicContent("");
+			}
+			topic.setTopicId(rs.getInt("topic_id"));
+			topic.setReadOnly(rs.getInt("topic_read_only") != 0);
+			topic.setDeleteDate(rs.getTimestamp("delete_date"));
+			topic.setTopicType(TopicType.findTopicType(rs.getInt("topic_type")));
+			topic.setRedirectTo(rs.getString("redirect_to"));
+			return topic;
 		}
 	}
 
