@@ -103,6 +103,138 @@ public class WikiDatabase {
 	}
 
 	/**
+	 * Method called to set up all JAMWiki system tables, indexes, and other
+	 * required database objects.  If a failure occurs during object creation
+	 * then this method will not attempt to clean up any objects that were
+	 * created prior to the failure.
+	 *
+	 * @param handler The QueryHandler instance that contains the
+	 *  database-appropriate create table SQL.
+	 * @param conn A database connection to use when connecting to the database
+	 *  from this method.
+	 * @throws SQLException Thrown if any error occurs during method execution.
+	 */
+	private static void createTables(QueryHandler handler, Connection conn) throws SQLException {
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_VIRTUAL_WIKI_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_USERS_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_WIKI_USER_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_WIKI_USER_LOGIN_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_USER_PREFERENCES_DEFAULTS_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_USER_PREFERENCES_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_USER_PREFERENCES_WIKI_USER_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_NAMESPACE_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_NAMESPACE_TRANSLATION_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_PAGE_NAME_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_PAGE_NAME_LOWER_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_NAMESPACE_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VIRTUAL_WIKI_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_CURRENT_VERSION_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VERSION_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VERSION_TOPIC_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VERSION_PREVIOUS_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VERSION_USER_DISPLAY_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_VERSION_USER_ID_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_CURRENT_VERSION_CONSTRAINT" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_LINKS_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_TOPIC_LINKS_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_WIKI_FILE_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_WIKI_FILE_VERSION_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_CATEGORY_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_CATEGORY_INDEX" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_GROUP_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_GROUP_MEMBERS_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_ROLE_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_AUTHORITIES_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_GROUP_AUTHORITIES_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_LOG_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_RECENT_CHANGE_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_WATCHLIST_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_INTERWIKI_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_CONFIGURATION_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_USER_BLOCK_TABLE" , conn);
+		WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_FILE_DATA_TABLE" , conn);
+		String sequenceSql = handler.sql("STATEMENT_CREATE_SEQUENCES");
+		if (!StringUtils.isBlank(sequenceSql)) {
+			WikiDatabase.executeUpdate(handler, "STATEMENT_CREATE_SEQUENCES" , conn);
+		}
+	}
+
+	/**
+	 * Drop all JAMWiki database objects.  This method drops tables, indexes, and
+	 * any database objects, as well as all data in those objects.  Note that if
+	 * a failure occurs while deleting any one object the method will continue
+	 * trying to delete any remaining objects.
+	 *
+	 * @param handler The QueryHandler instance that contains the
+	 *  database-appropriate delete table SQL.
+	 * @param conn A database connection to use when connecting to the database
+	 *  from this method.
+	 */
+	private static void dropTables(QueryHandler handler, Connection conn) {
+		// note that this method is called during creation failures, so be careful to
+		// catch errors that might result from a partial failure during install.  also
+		// note that the coding style violation here is intentional since it makes the
+		// actual work of the method more obvious.
+		String sequenceSql = handler.sql("STATEMENT_DROP_SEQUENCES");
+		if (!StringUtils.isBlank(sequenceSql)) {
+			WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_SEQUENCES" , conn);
+		}
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_FILE_DATA_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_USER_BLOCK_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_CONFIGURATION_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_INTERWIKI_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_WATCHLIST_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_RECENT_CHANGE_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_LOG_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_GROUP_AUTHORITIES_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_AUTHORITIES_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_ROLE_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_GROUP_MEMBERS_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_GROUP_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_CATEGORY_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_WIKI_FILE_VERSION_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_WIKI_FILE_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_TOPIC_LINKS_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_TOPIC_CURRENT_VERSION_CONSTRAINT" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_TOPIC_VERSION_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_TOPIC_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_NAMESPACE_TRANSLATION_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_NAMESPACE_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_WIKI_USER_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_USERS_TABLE" , conn);
+		WikiDatabase.executeUpdateNoException(handler, "STATEMENT_DROP_VIRTUAL_WIKI_TABLE" , conn);
+	}
+
+	/**
+	 *
+	 */
+	private static int executeUpdate(QueryHandler handler, String property, Connection conn) throws SQLException {
+		Statement stmt = null;
+		String sql = handler.sql(property);
+		try {
+			stmt = conn.createStatement();
+			return stmt.executeUpdate(sql);
+		} catch (SQLException e) {
+			logger.error("Failure while executing " + sql, e);
+			throw e;
+		} finally {
+			DatabaseConnection.closeStatement(stmt);
+		}
+	}
+
+	/**
+	 * Execute a string representing a SQL statement, suppressing any exceptions.
+	 */
+	private static void executeUpdateNoException(QueryHandler handler, String property, Connection conn) {
+		try {
+			WikiDatabase.executeUpdate(handler, property, conn);
+		} catch (SQLException e) {
+			// suppress
+		}
+	}
+
+	/**
 	 *
 	 */
 	private static QueryHandler findNewQueryHandler(Properties props) {
@@ -288,7 +420,7 @@ public class WikiDatabase {
 			logger.error("Error attempting to migrate the database", e);
 			errors.add(new WikiMessage("error.unknown", e.getMessage()));
 			try {
-				newQueryHandler.dropTables(conn);
+				WikiDatabase.dropTables(newQueryHandler, conn);
 			} catch (Exception ex) {
 				logger.warn("Unable to drop tables in NEW database following failed migration", ex);
 			}
@@ -367,12 +499,12 @@ public class WikiDatabase {
 			DatabaseConnection.closeStatement(stmt);
 		}
 		try {
-			newQueryHandler.createTables(conn);
+			WikiDatabase.createTables(newQueryHandler, conn);
 		} catch (Exception e) {
 			logger.error("Error attempting to migrate the database", e);
 			errors.add(new WikiMessage("error.unknown", e.getMessage()));
 			try {
-				newQueryHandler.dropTables(conn);
+				WikiDatabase.dropTables(newQueryHandler, conn);
 			} catch (Exception ex) {
 				logger.warn("Unable to drop tables in NEW database following failed migration", ex);
 			}
@@ -400,13 +532,13 @@ public class WikiDatabase {
 	 */
 	protected static void purgeData(Connection conn) throws DataAccessException {
 		// BOOM!  Everything gone...
-		WikiBase.getDataHandler().queryHandler().dropTables(conn);
+		WikiDatabase.dropTables(WikiBase.getDataHandler().queryHandler(), conn);
 		try {
 			// re-create empty tables
-			WikiBase.getDataHandler().queryHandler().createTables(conn);
+			WikiDatabase.createTables(WikiBase.getDataHandler().queryHandler(), conn);
 		} catch (Exception e) {
 			// creation failure, don't leave tables half-committed
-			WikiBase.getDataHandler().queryHandler().dropTables(conn);
+			WikiDatabase.dropTables(WikiBase.getDataHandler().queryHandler(), conn);
 		}
 	}
 
@@ -565,7 +697,7 @@ public class WikiDatabase {
 						try {
 							conn = DatabaseConnection.getConnection();
 							// set up tables
-							WikiBase.getDataHandler().queryHandler().createTables(conn);
+							WikiDatabase.createTables(WikiBase.getDataHandler().queryHandler(), conn);
 							WikiDatabase.setupDefaultVirtualWiki();
 							WikiDatabase.setupDefaultNamespaces();
 							WikiDatabase.setupDefaultInterwikis();
@@ -609,7 +741,7 @@ public class WikiDatabase {
 		Connection conn = null;
 		try {
 			conn = DatabaseConnection.getConnection();
-			WikiBase.getDataHandler().queryHandler().dropTables(conn);
+			WikiDatabase.dropTables(WikiBase.getDataHandler().queryHandler(), conn);
 		} catch (Exception e) {
 			// ignore, things have failed already
 		} finally {

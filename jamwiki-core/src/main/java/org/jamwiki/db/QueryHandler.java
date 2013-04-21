@@ -16,7 +16,6 @@
  */
 package org.jamwiki.db;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -101,18 +100,6 @@ public interface QueryHandler {
 	 *  connection.
 	 */
 	String connectionValidationQuery();
-
-	/**
-	 * Method called to set up all JAMWiki system tables, indexes, and other
-	 * required database objects.  If a failure occurs during object creation
-	 * then this method will not attempt to clean up any objects that were
-	 * created prior to the failure.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 * @throws SQLException Thrown if any error occurs during method execution.
-	 */
-	void createTables(Connection conn) throws SQLException;
 
 	/**
 	 * Delete all authorities for a specific group.
@@ -200,37 +187,6 @@ public interface QueryHandler {
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
 	void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException;
-
-	/**
-	 * Drop all JAMWiki database objects.  This method drops tables, indexes, and
-	 * any database objects, as well as all data in those objects.  Note that if
-	 * a failure occurs while deleting any one object the method will continue
-	 * trying to delete any remaining objects.
-	 *
-	 * @param conn A database connection to use when connecting to the database
-	 *  from this method.
-	 */
-	void dropTables(Connection conn);
-
-	/**
-	 * This method should be called only during upgrades and provides the capability
-	 * to execute a SQL query from a QueryHandler-specific property file.
-	 *
-	 * @param prop The name of the SQL property file value to execute.
-	 * @throws SQLException Thrown if any error occurs during execution.
-	 */
-	void executeUpgradeQuery(String prop) throws SQLException;
-
-	/**
-	 * This method should be called only during upgrades and provides the capability
-	 * to execute update SQL from a QueryHandler-specific property file.
-	 *
-	 * @param prop The name of the SQL property file value to execute.
-	 * @throws SQLException Thrown if any error occurs during execution.
-	 *
-	 * @return true if action actually performed and false otherwise.
-	 */
-	boolean executeUpgradeUpdate(String prop) throws SQLException;
 
 	/**
 	 * Return a simple query, that if successfully run indicates that JAMWiki
@@ -1000,6 +956,17 @@ public interface QueryHandler {
 	 * @throws SQLException Thrown if any error occurs during method execution.
 	 */
 	List<String> lookupWikiUsers(Pagination pagination) throws SQLException;
+
+	/**
+	 * Given a property name that holds a SQL query, return the database-specific
+	 * SQL for that property.
+	 *
+	 * @param property The property name that holds the SQL query.
+	 * @return The database-specific SQL for that property.
+	 * @throws IllegalArgumentException if there is no SQL associated with the
+	 *  property.
+	 */
+	String sql(String property) throws IllegalArgumentException;
 
 	/**
 	 * Test if a user preference exists.

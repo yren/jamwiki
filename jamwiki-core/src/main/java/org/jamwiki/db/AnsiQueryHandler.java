@@ -16,8 +16,6 @@
  */
 package org.jamwiki.db;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -319,54 +317,6 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void createTables(Connection conn) throws SQLException {
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_VIRTUAL_WIKI_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_USERS_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_WIKI_USER_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_WIKI_USER_LOGIN_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_USER_PREFERENCES_DEFAULTS_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_USER_PREFERENCES_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_USER_PREFERENCES_WIKI_USER_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_NAMESPACE_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_NAMESPACE_TRANSLATION_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_PAGE_NAME_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_PAGE_NAME_LOWER_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_NAMESPACE_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VIRTUAL_WIKI_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_CURRENT_VERSION_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VERSION_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VERSION_TOPIC_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VERSION_PREVIOUS_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VERSION_USER_DISPLAY_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_VERSION_USER_ID_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_CURRENT_VERSION_CONSTRAINT, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_LINKS_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_TOPIC_LINKS_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_WIKI_FILE_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_WIKI_FILE_VERSION_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_CATEGORY_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_CATEGORY_INDEX, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_GROUP_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_GROUP_MEMBERS_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_ROLE_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_AUTHORITIES_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_GROUP_AUTHORITIES_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_LOG_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_RECENT_CHANGE_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_WATCHLIST_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_INTERWIKI_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_CONFIGURATION_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_USER_BLOCK_TABLE, conn);
-		DatabaseConnection.executeUpdate(STATEMENT_CREATE_FILE_DATA_TABLE, conn);
-		if (!StringUtils.isBlank(STATEMENT_CREATE_SEQUENCES)) {
-			DatabaseConnection.executeUpdate(STATEMENT_CREATE_SEQUENCES, conn);
-		}
-	}
-
-	/**
-	 *
-	 */
 	public void deleteGroupAuthorities(int groupId) throws SQLException {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_GROUP_AUTHORITIES,
@@ -480,43 +430,6 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 *
-	 */
-	public void dropTables(Connection conn) {
-		// note that this method is called during creation failures, so be careful to
-		// catch errors that might result from a partial failure during install.  also
-		// note that the coding style violation here is intentional since it makes the
-		// actual work of the method more obvious.
-		if (!StringUtils.isBlank(STATEMENT_DROP_SEQUENCES)) {
-			DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_SEQUENCES, conn);
-		}
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_FILE_DATA_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_USER_BLOCK_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_CONFIGURATION_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_INTERWIKI_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_WATCHLIST_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_RECENT_CHANGE_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_LOG_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_GROUP_AUTHORITIES_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_AUTHORITIES_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_ROLE_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_GROUP_MEMBERS_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_GROUP_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_CATEGORY_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_WIKI_FILE_VERSION_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_WIKI_FILE_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_TOPIC_LINKS_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_TOPIC_CURRENT_VERSION_CONSTRAINT, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_TOPIC_VERSION_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_TOPIC_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_NAMESPACE_TRANSLATION_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_NAMESPACE_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_WIKI_USER_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_USERS_TABLE, conn);
-		DatabaseConnection.executeUpdateNoException(STATEMENT_DROP_VIRTUAL_WIKI_TABLE, conn);
-	}
-
-	/**
 	 * Execute an insert that returns a generated key value.
 	 */
 	private int executeGeneratedKeyInsert(String insertSql, Object[] args, int[] types, String primaryKeyColumnName) {
@@ -527,52 +440,6 @@ public class AnsiQueryHandler implements QueryHandler {
 		KeyHolder keyHolder = new GeneratedKeyHolder();
 		DatabaseConnection.getJdbcTemplate().update(factory.newPreparedStatementCreator(args), keyHolder);
 		return keyHolder.getKey().intValue();
-	}
-
-	/**
-	 * This method should be called only during upgrades and provides the capability
-	 * to execute a SQL query from a QueryHandler-specific property file.
-	 *
-	 * @param prop The name of the SQL property file value to execute.
-	 * @param conn The SQL connection to use when executing the SQL.
-	 * @throws SQLException Thrown if any error occurs during execution.
-	 */
-	public void executeUpgradeQuery(String prop) throws SQLException {
-		String sql = this.props.getProperty(prop);
-		if (sql == null) {
-			throw new SQLException("No property found for " + prop);
-		}
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(sql);
-			stmt.executeQuery();
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, null);
-		}
-	}
-
-	/**
-	 * This method should be called only during upgrades and provides the capability
-	 * to execute update SQL from a QueryHandler-specific property file.
-	 *
-	 * @param prop The name of the SQL property file value to execute.
-	 * @param conn The SQL connection to use when executing the SQL.
-	 * @throws SQLException Thrown if any error occurs during execution.
-	 *
-	 * @return true if action actually performed and false otherwise.
-	 */
-	public boolean executeUpgradeUpdate(String prop) throws SQLException {
-		String sql = this.props.getProperty(prop);
-		if (sql == null) {
-			throw new SQLException("No property found for " + prop);
-		}
-		if (StringUtils.isBlank(sql)) {
-			// some queries such as validation queries are not defined on all databases
-			return false;
-		}
-		DatabaseConnection.getJdbcTemplate().update(sql);
-		return true;
 	}
 
 	/**
@@ -2258,6 +2125,23 @@ public class AnsiQueryHandler implements QueryHandler {
 				limit
 		);
 		DatabaseConnection.getJdbcTemplate().update(STATEMENT_INSERT_RECENT_CHANGES_LOGS);
+	}
+
+	/**
+	 * Given a property name that holds a SQL query, return the database-specific
+	 * SQL for that property.
+	 *
+	 * @param property The property name that holds the SQL query.
+	 * @return The database-specific SQL for that property.
+	 * @throws IllegalArgumentException if there is no SQL associated with the
+	 *  property.
+	 */
+	public String sql(String property) throws IllegalArgumentException {
+		String sql = this.props.getProperty(property);
+		if (sql == null) {
+			throw new IllegalArgumentException("No property found for " + property);
+		}
+		return sql;
 	}
 
 	/**

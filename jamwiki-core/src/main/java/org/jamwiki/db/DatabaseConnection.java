@@ -141,42 +141,6 @@ public class DatabaseConnection {
 	/**
 	 *
 	 */
-	protected static int executeUpdate(String sql, Connection conn) throws SQLException {
-		Statement stmt = null;
-		try {
-			long start = System.currentTimeMillis();
-			stmt = conn.createStatement();
-			if (logger.isInfoEnabled()) {
-				logger.info("Executing SQL: " + sql);
-			}
-			int result = stmt.executeUpdate(sql);
-			if (logger.isDebugEnabled()) {
-				long execution = System.currentTimeMillis() - start;
-				logger.debug("Executed " + sql + " (" + (execution / 1000.000) + " s.)");
-			}
-			return result;
-		} catch (SQLException e) {
-			logger.error("Failure while executing " + sql, e);
-			throw e;
-		} finally {
-			DatabaseConnection.closeStatement(stmt);
-		}
-	}
-
-	/**
-	 * Execute a string representing a SQL statement, suppressing any exceptions.
-	 */
-	protected static void executeUpdateNoException(String sql, Connection conn) {
-		try {
-			DatabaseConnection.executeUpdate(sql, conn);
-		} catch (SQLException e) {
-			// suppress
-		}
-	}
-
-	/**
-	 *
-	 */
 	protected static Connection getConnection() {
 		if (dataSource == null) {
 			// DataSource has not yet been created, obtain it now
