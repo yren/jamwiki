@@ -9,6 +9,7 @@ Bugfixes:
 
   * Fix error that could cause categories to be initialized with the name
     "category_name" instead of the actual category name.
+  * HTML validation fixes (Thomas Koch).
 
 Translation Updates:
 
