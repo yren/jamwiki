@@ -35,6 +35,7 @@ Bugfixes:
     default pages in non-English languages (Peter Palmreuther / pitpalme).
   * Fix invalid Mediawiki text data (Peter Palmreuther / pitpalme).
   * Miscellaneous minor optimizations (Peter Palmreuther / pitpalme).
+  * Upgrade the Maven release plugin to 2.4.1.
 
 Translation Updates:
 
