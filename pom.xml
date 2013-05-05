@@ -4,7 +4,7 @@
 	<groupId>org.jamwiki</groupId>
 	<artifactId>jamwiki</artifactId>
 	<packaging>pom</packaging>
-	<version>1.3.2-SNAPSHOT</version>
+	<version>1.3.2</version>
 	<name>JAMWiki Super POM</name>
 	<description>
 		JAMWiki is a Java-based Wiki engine which offers many of the
@@ -21,7 +21,8 @@
 		<connection>scm:git:git://git.code.sf.net/p/jamwiki/code</connection>
 		<developerConnection>scm:git:ssh://git.code.sf.net/p/jamwiki/code</developerConnection>
 		<url>http://sourceforge.net/p/jamwiki/code/</url>
-	</scm>
+	  <tag>1.3.2</tag>
+  </scm>
 	<issueManagement>
 		<system>JIRA</system>
 		<url>http://jira.jamwiki.org/browse/JAMWIKI</url>
