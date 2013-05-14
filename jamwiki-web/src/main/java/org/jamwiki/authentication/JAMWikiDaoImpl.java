@@ -49,12 +49,7 @@ public class JAMWikiDaoImpl implements UserDetailsService {
 		if (StringUtils.isBlank(username)) {
 			throw new UsernameNotFoundException("Cannot retrieve user without a valid username");
 		}
-		String encryptedPassword = null;
-		try {
-			encryptedPassword = WikiBase.getDataHandler().lookupWikiUserEncryptedPassword(username);
-		} catch (org.jamwiki.DataAccessException e) {
-			throw new DataAccessResourceFailureException("Unable to retrieve authorities for user: " + username, e);
-		}
+		String encryptedPassword = WikiBase.getDataHandler().lookupWikiUserEncryptedPassword(username);
 		if (encryptedPassword == null) {
 			throw new UsernameNotFoundException("Failure retrieving user information for " + username);
 		}
@@ -77,15 +72,11 @@ public class JAMWikiDaoImpl implements UserDetailsService {
 		// add authorities specific to this user
 		if (!StringUtils.isBlank(username)) {
 			// FIXME - log error for blank username?  RegisterServlet will trigger that.
-			try {
-				List<Role> roles = WikiBase.getDataHandler().getRoleMapUser(username);
-				if (roles != null) {
-					for (Role role : roles) {
-						results.add(new SimpleGrantedAuthority(role.getAuthority()));
-					}
+			List<Role> roles = WikiBase.getDataHandler().getRoleMapUser(username);
+			if (roles != null) {
+				for (Role role : roles) {
+					results.add(new SimpleGrantedAuthority(role.getAuthority()));
 				}
-			} catch (org.jamwiki.DataAccessException e) {
-				throw new DataAccessResourceFailureException("Unable to retrieve authorities for user: " + username, e);
 			}
 		}
 		return results;

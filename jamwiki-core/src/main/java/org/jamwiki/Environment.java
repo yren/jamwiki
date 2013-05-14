@@ -495,8 +495,6 @@ public class Environment {
 			WikiBase.getDataHandler().writeConfiguration(propertiesToMap(getInstance()));
 		} catch (IOException e) {
 			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()));
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()));
 		}
 	}
 

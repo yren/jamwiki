@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
@@ -67,7 +66,7 @@ public class BlockServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void block(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException, WikiException {
+	private void block(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws WikiException {
 		UserBlock userBlock = this.initializeBlock(request, next, pageInfo);
 		if (userBlock != null) {
 			WikiBase.getDataHandler().writeUserBlock(userBlock);
@@ -92,7 +91,7 @@ public class BlockServlet extends JAMWikiServlet {
 	 * block page and return it, or return <code>null</code> if there are errors
 	 * encountered while building the block object.
 	 */
-	private UserBlock initializeBlock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private UserBlock initializeBlock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		String username = StringUtils.trim(request.getParameter("user"));
 		String ipAddress = Utilities.isIpAddress(username) ? username : null;
 		WikiUser wikiUser = this.initializeWikiUser(request, pageInfo);
@@ -130,7 +129,7 @@ public class BlockServlet extends JAMWikiServlet {
 	 * unblock page and return it, or return <code>null</code> if there are errors
 	 * encountered while building the block object.
 	 */
-	private UserBlock initializeUnblock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private UserBlock initializeUnblock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		String username = StringUtils.trim(request.getParameter("user"));
 		String ipAddress = Utilities.isIpAddress(username) ? username : null;
 		WikiUser wikiUser = this.initializeWikiUser(request, pageInfo);
@@ -163,7 +162,7 @@ public class BlockServlet extends JAMWikiServlet {
 	 * matching user is found and requires that the two pages use the same form field
 	 * names.
 	 */
-	private WikiUser initializeWikiUser(HttpServletRequest request, WikiPageInfo pageInfo) throws DataAccessException {
+	private WikiUser initializeWikiUser(HttpServletRequest request, WikiPageInfo pageInfo) {
 		String username = StringUtils.trim(request.getParameter("user"));
 		WikiUser wikiUser = null;
 		if (StringUtils.isBlank(username)) {
@@ -180,7 +179,7 @@ public class BlockServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void unblock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException, WikiException {
+	private void unblock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws WikiException {
 		UserBlock userBlock = this.initializeUnblock(request, next, pageInfo);
 		if (userBlock != null) {
 			WikiBase.getDataHandler().writeUserBlock(userBlock);
@@ -195,7 +194,7 @@ public class BlockServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void viewBlock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private void viewBlock(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		next.addObject("user", request.getParameter("user"));
 		WikiUser user = this.initializeWikiUser(request, pageInfo);
 		if (user != null) {

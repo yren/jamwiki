@@ -17,10 +17,8 @@
 package org.jamwiki.db;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
@@ -54,11 +52,9 @@ public class DatabaseUpgrades {
 	 *
 	 * @param prop The name of the SQL property file value to execute.
 	 * @param conn The SQL connection to use when executing the SQL.
-	 * @throws SQLException Thrown if any error occurs during execution.
-	 *
 	 * @return true if action actually performed and false otherwise.
 	 */
-	private static boolean executeUpgradeUpdate(String prop) throws SQLException {
+	private static boolean executeUpgradeUpdate(String prop) {
 		String sql = WikiBase.getDataHandler().queryHandler().sql(prop);
 		if (StringUtils.isBlank(sql)) {
 			// some queries such as validation queries are not defined on all databases
@@ -106,12 +102,6 @@ public class DatabaseUpgrades {
 							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
 							DatabaseUpgrades.executeUpgradeUpdate("UPGRADE_130_ADD_USER_TABLE_COLUMN_CHALLENGE_TRIES");
 							messages.add(new WikiMessage("upgrade.message.db.data.updated", "jam_users"));
-						} catch (SQLException e) {
-							status.setRollbackOnly();
-							throw new TransactionRuntimeException(e);
-						} catch (DataAccessException e) {
-							status.setRollbackOnly();
-							throw new TransactionRuntimeException(e);
 						} catch (WikiException e) {
 							status.setRollbackOnly();
 							throw new TransactionRuntimeException(e);

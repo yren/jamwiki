@@ -18,7 +18,6 @@ package org.jamwiki.db;
 
 import java.io.IOException;
 import java.util.List;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.JAMWikiUnitTest;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -37,7 +36,7 @@ public class AnsiDataHandlerTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testReloadRecentChanges() throws DataAccessException {
+	public void testReloadRecentChanges() {
 		// verify that this runs without throwing exceptions
 		WikiBase.getDataHandler().reloadRecentChanges();
 	}
@@ -46,7 +45,7 @@ public class AnsiDataHandlerTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testTopicLookup1() throws DataAccessException {
+	public void testTopicLookup1() {
 		Topic topic = WikiBase.getDataHandler().lookupTopic("en", WikiBase.SPECIAL_PAGE_SYSTEM_CSS, false);
 		assertEquals("Incorrect topic name", topic.getName(), WikiBase.SPECIAL_PAGE_SYSTEM_CSS);
 	}
@@ -55,7 +54,7 @@ public class AnsiDataHandlerTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testPurgeTopicVersion() throws DataAccessException, IOException, WikiException {
+	public void testPurgeTopicVersion() throws IOException, WikiException {
 		// load a test topic with three versions
 		String topicName = "Purge Topic Test";
 		Topic topic = null;
@@ -95,7 +94,7 @@ public class AnsiDataHandlerTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testWriteAndTopicLookup1() throws DataAccessException, IOException, WikiException {
+	public void testWriteAndTopicLookup1() throws IOException, WikiException {
 		String FILE_NAME = "Help_-_Test";
 		String TOPIC_NAME = "Help:Test";
 		this.setupTopic(null, FILE_NAME);

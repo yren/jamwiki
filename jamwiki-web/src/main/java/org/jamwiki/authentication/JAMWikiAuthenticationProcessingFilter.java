@@ -26,7 +26,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.utils.WikiLogger;
@@ -102,9 +101,6 @@ public class JAMWikiAuthenticationProcessingFilter extends UsernamePasswordAuthe
 					wikiUser.setChallengeTries(0);
 					WikiBase.getDataHandler().updatePwResetChallengeData(wikiUser);
 				}
-			} catch (DataAccessException e) {
-				// log but do not throw - failure to update last login date is non-fatal
-				logger.error("Failure while updating last login date for " + username, e);
 			} catch (WikiException e) {
 				// log but do not throw - failure to update last login date is non-fatal
 				logger.error("Failure while updating last login date for " + username, e);

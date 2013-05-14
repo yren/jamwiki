@@ -21,7 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -126,9 +125,8 @@ public abstract class LinkUtil {
 	 * @return A url that links to the edit page for the specified topic.
 	 *  Note that this method returns only the URL, not a fully-formed HTML
 	 *  anchor tag.
-	 * @throws DataAccessException Thrown if any error occurs while builing the link URL.
 	 */
-	public static String buildEditLinkUrl(String context, String virtualWiki, String topic, String query, int section) throws DataAccessException {
+	public static String buildEditLinkUrl(String context, String virtualWiki, String topic, String query, int section) {
 		if (Environment.getBooleanValue(Environment.PROP_PARSER_ALLOW_CAPITALIZATION)) {
 			topic = StringUtils.capitalize(topic);
 		}
@@ -186,10 +184,8 @@ public abstract class LinkUtil {
 	 *  where the caption is not guaranteed to be free from potentially
 	 *  malicious HTML code.
 	 * @return An HTML anchor link that matches the given input parameters.
-	 * @throws DataAccessException Thrown if any error occurs while retrieving
-	 *  topic information.
 	 */
-	public static String buildInternalLinkHtml(WikiLink wikiLink, String text, String style, String target, boolean escapeHtml) throws DataAccessException {
+	public static String buildInternalLinkHtml(WikiLink wikiLink, String text, String style, String target, boolean escapeHtml) {
 		String url = LinkUtil.buildTopicUrl(wikiLink);
 		String topic = wikiLink.getDestination();
 		if (StringUtils.isBlank(text)) {
@@ -231,10 +227,8 @@ public abstract class LinkUtil {
 	 *
 	 * @param wikiLink The WikiLink object containing all relevant information
 	 *  about the link being generated.
-	 * @throws DataAccessException Thrown if any error occurs while retrieving topic
-	 *  information.
 	 */
-	public static String buildTopicUrl(WikiLink wikiLink) throws DataAccessException {
+	public static String buildTopicUrl(WikiLink wikiLink) {
 		String url = null;
 		String topic = wikiLink.getDestination();
 		String virtualWiki = ((wikiLink.getAltVirtualWiki() != null) ? wikiLink.getAltVirtualWiki().getName() : wikiLink.getVirtualWiki());
@@ -281,12 +275,7 @@ public abstract class LinkUtil {
 			throw new IllegalArgumentException("Topic name must not be empty in extractCommentsLink");
 		}
 		WikiLink wikiLink = new WikiLink(null, virtualWiki, name);
-		Namespace commentsNamespace = null;
-		try {
-			commentsNamespace = Namespace.findCommentsNamespace(wikiLink.getNamespace());
-		} catch (DataAccessException e) {
-			throw new IllegalStateException("Database error while retrieving comments namespace", e);
-		}
+		Namespace commentsNamespace = Namespace.findCommentsNamespace(wikiLink.getNamespace());
 		if (commentsNamespace == null) {
 			throw new IllegalArgumentException("Topic " + virtualWiki + ':' + name + " does not have a comments namespace");
 		}
@@ -324,9 +313,8 @@ public abstract class LinkUtil {
 	 *  infinite loops if topics redirect back to one another.
 	 * @return If the parent topic is a redirect then this method returns the target topic that
 	 *  is being redirected to, otherwise the parent topic is returned.
-	 * @throws DataAccessException Thrown if any error occurs while retrieving data.
 	 */
-	public static Topic findRedirectedTopic(Topic parent, int attempts) throws DataAccessException {
+	public static Topic findRedirectedTopic(Topic parent, int attempts) {
 		int count = attempts;
 		String target = parent.getRedirectTo();
 		if (parent.getTopicType() != TopicType.REDIRECT || StringUtils.isBlank(target)) {
@@ -401,11 +389,7 @@ public abstract class LinkUtil {
 		if (wikiLink.getNamespace().getId().equals(Namespace.SPECIAL_ID)) {
 			return false;
 		}
-		try {
-			return (Namespace.findCommentsNamespace(wikiLink.getNamespace()) != null);
-		} catch (DataAccessException e) {
-			throw new IllegalStateException("Database error while retrieving comments namespace", e);
-		}
+		return (Namespace.findCommentsNamespace(wikiLink.getNamespace()) != null);
 	}
 
 	/**
@@ -421,9 +405,8 @@ public abstract class LinkUtil {
 	 * @return The article name if the given name and virtual wiki correspond
 	 *  to a valid special page, user page, topic, or other existing article,
 	 *  or <code>null</code> if no valid article exists.
-	 * @throws DataAccessException Thrown if an error occurs during lookup.
 	 */
-	public static String isExistingArticle(String virtualWiki, String articleName) throws DataAccessException {
+	public static String isExistingArticle(String virtualWiki, String articleName) {
 		if (StringUtils.isBlank(virtualWiki) || StringUtils.isBlank(articleName)) {
 			return null;
 		}
@@ -562,14 +545,9 @@ public abstract class LinkUtil {
 			return processed;
 		}
 		String linkPrefix = processed.substring(0, prefixPosition).trim();
-		try {
-			Interwiki interwiki = WikiBase.getDataHandler().lookupInterwiki(linkPrefix);
-			if (interwiki != null) {
-				wikiLink.setInterwiki(interwiki);
-			}
-		} catch (DataAccessException e) {
-			// this should not happen, if it does then swallow the error
-			logger.warn("Failure while trying to lookup interwiki: " + linkPrefix, e);
+		Interwiki interwiki = WikiBase.getDataHandler().lookupInterwiki(linkPrefix);
+		if (interwiki != null) {
+			wikiLink.setInterwiki(interwiki);
 		}
 		return (wikiLink.getInterwiki() != null) ? processed.substring(prefixPosition + Namespace.SEPARATOR.length()).trim(): processed;
 	}
@@ -584,14 +562,9 @@ public abstract class LinkUtil {
 			return processed;
 		}
 		String linkPrefix = processed.substring(0, prefixPosition).trim();
-		try {
-			VirtualWiki virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(linkPrefix);
-			if (virtualWiki != null) {
-				wikiLink.setAltVirtualWiki(virtualWiki);
-			}
-		} catch (DataAccessException e) {
-			// this should not happen, if it does then swallow the error
-			logger.warn("Failure while trying to lookup virtual wiki: " + linkPrefix, e);
+		VirtualWiki virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(linkPrefix);
+		if (virtualWiki != null) {
+			wikiLink.setAltVirtualWiki(virtualWiki);
 		}
 		return (wikiLink.getAltVirtualWiki() != null) ? processed.substring(prefixPosition + Namespace.SEPARATOR.length()).trim(): processed;
 	}
@@ -607,13 +580,8 @@ public abstract class LinkUtil {
 			return Namespace.namespace(Namespace.MAIN_ID);
 		}
 		String linkPrefix = topicName.substring(0, prefixPosition).trim();
-		try {
-			Namespace namespace = WikiBase.getDataHandler().lookupNamespace(virtualWiki, linkPrefix);
-			return (namespace == null) ? Namespace.namespace(Namespace.MAIN_ID) : namespace;
-		} catch (DataAccessException e) {
-			// this should not happen, if it does then throw a runtime exception
-			throw new IllegalStateException("Failure while trying to lookup namespace: " + linkPrefix, e);
-		}
+		Namespace namespace = WikiBase.getDataHandler().lookupNamespace(virtualWiki, linkPrefix);
+		return (namespace == null) ? Namespace.namespace(Namespace.MAIN_ID) : namespace;
 	}
 
 	/**

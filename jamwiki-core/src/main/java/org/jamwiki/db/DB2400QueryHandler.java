@@ -16,7 +16,6 @@
  */
 package org.jamwiki.db;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -85,7 +84,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) throws SQLException {
+	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) {
 		String sql = this.formatStatement(STATEMENT_SELECT_CATEGORIES, pagination);
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				sql,
@@ -108,7 +107,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) throws SQLException {
+	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = null;
 		Object[] args = null;
@@ -129,7 +128,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = this.formatStatement(STATEMENT_SELECT_RECENT_CHANGES, pagination);
 		Object[] args = {
@@ -142,7 +141,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) throws SQLException {
+	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) {
 		// FIXME - sort order ignored
 		// the SQL contains the syntax "is {0} null", which needs to be formatted as a message.
 		Object[] params = {pagination.getEnd(), pagination.getNumResults(), ""};
@@ -160,7 +159,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) throws SQLException {
+	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) {
 		String sql = this.formatStatement(STATEMENT_SELECT_TOPICS_ADMIN, pagination);
 		Object[] args = {
 				virtualWikiId
@@ -172,7 +171,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = this.formatStatement(STATEMENT_SELECT_WIKI_USER_CHANGES_LOGIN, pagination);
 		Object[] args = {
@@ -186,7 +185,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = this.formatStatement(STATEMENT_SELECT_WIKI_USER_CHANGES_ANONYMOUS, pagination);
 		Object[] args = {
@@ -200,7 +199,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) throws SQLException {
+	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) {
 		String sql = this.formatStatement(STATEMENT_SELECT_WATCHLIST_CHANGES, pagination);
 		Object[] args = {
 				virtualWikiId,
@@ -213,7 +212,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
+	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) {
 		String sql = this.formatStatement(STATEMENT_SELECT_TOPIC_BY_TYPE, pagination);
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				sql,
@@ -234,7 +233,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<String> lookupWikiUsers(Pagination pagination) throws SQLException {
+	public List<String> lookupWikiUsers(Pagination pagination) {
 		String sql = this.formatStatement(STATEMENT_SELECT_WIKI_USERS, pagination);
 		return DatabaseConnection.getJdbcTemplate().queryForList(sql, String.class);
 	}
@@ -243,7 +242,7 @@ public class DB2400QueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public void reloadRecentChanges(int limit) throws SQLException {
+	public void reloadRecentChanges(int limit) {
 		DatabaseConnection.getJdbcTemplate().update(STATEMENT_DELETE_RECENT_CHANGES);
 		String sql = this.formatStatement(STATEMENT_INSERT_RECENT_CHANGES_VERSIONS, limit);
 		DatabaseConnection.getJdbcTemplate().update(sql, limit);

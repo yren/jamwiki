@@ -16,7 +16,6 @@
  */
 package org.jamwiki.model;
 
-import org.jamwiki.DataAccessException;
 import org.jamwiki.JAMWikiUnitTest;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -75,7 +74,7 @@ public class NamespaceTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testFindCommentsNamespace1() throws DataAccessException {
+	public void testFindCommentsNamespace1() {
 		Namespace result = Namespace.findCommentsNamespace(Namespace.namespace(Namespace.MAIN_ID));
 		assertEquals("result", Namespace.namespace(Namespace.COMMENTS_ID), result);
 	}
@@ -84,7 +83,7 @@ public class NamespaceTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testFindCommentsNamespace2() throws DataAccessException {
+	public void testFindCommentsNamespace2() {
 		Namespace result = Namespace.findCommentsNamespace(Namespace.namespace(Namespace.USER_ID));
 		assertEquals("result", Namespace.namespace(Namespace.USER_COMMENTS_ID), result);
 	}
@@ -93,7 +92,7 @@ public class NamespaceTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testFindCommentsNamespace3() throws DataAccessException {
+	public void testFindCommentsNamespace3() {
 		Namespace result = Namespace.findCommentsNamespace(Namespace.namespace(Namespace.USER_COMMENTS_ID));
 		assertEquals("result", Namespace.namespace(Namespace.USER_COMMENTS_ID), result);
 	}
@@ -102,7 +101,7 @@ public class NamespaceTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
-	public void testFindCommentsNamespace4() throws DataAccessException {
+	public void testFindCommentsNamespace4() {
 		Namespace result = Namespace.findCommentsNamespace(Namespace.namespace(Namespace.SPECIAL_ID));
 		assertNull("result", result);
 	}

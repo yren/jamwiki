@@ -19,7 +19,6 @@ package org.jamwiki.parser.jflex;
 import java.io.Reader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrBuilder;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.JAMWikiParser;
 import org.jamwiki.parser.LinkUtil;
 import org.jamwiki.parser.ParserException;
@@ -350,19 +349,15 @@ public class JFlexParser implements JAMWikiParser {
 		String redirect = parserOutput.getRedirect();
 		WikiLink wikiLink = JFlexParserUtil.parseWikiLink(parserInput, parserOutput, "[[" + redirect + "]]");
 		String style = "redirect";
-		try {
-			String virtualWiki = parserInput.getVirtualWiki();
-			// see if the redirect link starts with a virtual wiki
-			if (wikiLink.getAltVirtualWiki() != null) {
-				virtualWiki = wikiLink.getAltVirtualWiki().getName();
-			}
-			if (LinkUtil.isExistingArticle(virtualWiki, wikiLink.getDestination()) == null && !wikiLink.isSpecial()) {
-				style = "edit redirect";
-			}
-			return LinkUtil.buildInternalLinkHtml(wikiLink, null, style, null, false);
-		} catch (DataAccessException e) {
-			throw new ParserException(e);
+		String virtualWiki = parserInput.getVirtualWiki();
+		// see if the redirect link starts with a virtual wiki
+		if (wikiLink.getAltVirtualWiki() != null) {
+			virtualWiki = wikiLink.getAltVirtualWiki().getName();
 		}
+		if (LinkUtil.isExistingArticle(virtualWiki, wikiLink.getDestination()) == null && !wikiLink.isSpecial()) {
+			style = "edit redirect";
+		}
+		return LinkUtil.buildInternalLinkHtml(wikiLink, null, style, null, false);
 	}
 
 	/**

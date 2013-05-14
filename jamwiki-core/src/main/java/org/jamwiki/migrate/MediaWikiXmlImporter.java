@@ -35,7 +35,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -108,7 +107,7 @@ public class MediaWikiXmlImporter extends DefaultHandler implements TopicImporte
 		} catch (IOException e) {
 			throw new MigrationException(e);
 		} catch (SAXException e) {
-			if (e.getCause() instanceof DataAccessException || e.getCause() instanceof WikiException) {
+			if (e.getCause() instanceof WikiException) {
 				throw new MigrationException(e.getCause());
 			} else {
 				throw new MigrationException(e);
@@ -181,12 +180,7 @@ public class MediaWikiXmlImporter extends DefaultHandler implements TopicImporte
 	private void initCurrentTopic(String topicName) throws SAXException {
 		topicName = convertArticleNameFromWikipediaToJAMWiki(topicName);
 		WikiLink wikiLink = new WikiLink(null, this.virtualWiki, topicName);
-		Topic existingTopic = null;
-		try {
-			existingTopic = WikiBase.getDataHandler().lookupTopic(this.virtualWiki, topicName, false);
-		} catch (DataAccessException e) {
-			throw new SAXException("Failure while validating topic name: " + this.virtualWiki + ':' + topicName, e);
-		}
+		Topic existingTopic = WikiBase.getDataHandler().lookupTopic(this.virtualWiki, topicName, false);
 		if (existingTopic != null && existingTopic.getVirtualWiki().equals(this.virtualWiki)) {
 			// do a second comparison of capitalized topic names in a case-sensitive way
 			// since the initial topic lookup will return a case-insensitive match for some
@@ -228,11 +222,7 @@ public class MediaWikiXmlImporter extends DefaultHandler implements TopicImporte
 		}
 		// topic versions are stored in a tree map to allow sorting... convert to a list
 		List<Integer> currentTopicVersionIdList = new ArrayList<Integer>(this.currentTopicVersions.values());
-		try {
-			WikiBase.getDataHandler().orderTopicVersions(this.currentTopic, currentTopicVersionIdList);
-		} catch (DataAccessException e) {
-			throw new SAXException("Failure while ordering topic versions for topic: " + this.currentTopic.getName(), e);
-		}
+		WikiBase.getDataHandler().orderTopicVersions(this.currentTopic, currentTopicVersionIdList);
 		this.parsedTopics.put(this.currentTopic, currentTopicVersionIdList);
 	}
 
@@ -284,14 +274,10 @@ public class MediaWikiXmlImporter extends DefaultHandler implements TopicImporte
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if (StringUtils.equals(MediaWikiConstants.MEDIAWIKI_ELEMENT_NAMESPACE, qName)) {
 			int key = NumberUtils.toInt(this.currentAttributeMap.get("key"));
-			try {
-				Namespace jamwikiNamespace = WikiBase.getDataHandler().lookupNamespaceById(key);
-				if (jamwikiNamespace != null) {
-					String mediawikiNamespace = currentElementBuffer.toString().trim();
-					mediawikiNamespaceMap.put(mediawikiNamespace, jamwikiNamespace.getLabel(this.virtualWiki));
-				}
-			} catch (DataAccessException e) {
-				throw new SAXException("Failure while processing namespace with ID: " + key, e);
+			Namespace jamwikiNamespace = WikiBase.getDataHandler().lookupNamespaceById(key);
+			if (jamwikiNamespace != null) {
+				String mediawikiNamespace = currentElementBuffer.toString().trim();
+				mediawikiNamespaceMap.put(mediawikiNamespace, jamwikiNamespace.getLabel(this.virtualWiki));
 			}
 		} else if (MediaWikiConstants.MEDIAWIKI_ELEMENT_TOPIC_NAME.equals(qName)) {
 			String topicName = currentElementBuffer.toString().trim();
@@ -351,8 +337,6 @@ public class MediaWikiXmlImporter extends DefaultHandler implements TopicImporte
 				}
 				this.topicVersionBuffer = new ArrayList<TopicVersion>();
 			}
-		} catch (DataAccessException e) {
-			throw new SAXException("Failure while writing topic: " + this.currentTopic.getName(), e);
 		} catch (WikiException e) {
 			throw new SAXException("Failure while writing topic: " + this.currentTopic.getName(), e);
 		}

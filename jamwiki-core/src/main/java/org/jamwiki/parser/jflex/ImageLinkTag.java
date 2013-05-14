@@ -22,7 +22,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.model.Namespace;
 import org.jamwiki.parser.ParserException;
 import org.jamwiki.parser.ParserInput;
@@ -87,9 +86,6 @@ public class ImageLinkTag implements JFlexParserTag {
 				// otherwise just return the image HTML
 				return result;
 			}
-		} catch (DataAccessException e) {
-			logger.error("Failure while parsing link " + raw, e);
-			return "";
 		} catch (ParserException e) {
 			logger.error("Failure while parsing link " + raw, e);
 			return "";
@@ -99,7 +95,7 @@ public class ImageLinkTag implements JFlexParserTag {
 	/**
 	 *
 	 */
-	private String parseImageLink(ParserInput parserInput, ParserOutput parserOutput, int mode, WikiLink wikiLink) throws DataAccessException, ParserException {
+	private String parseImageLink(ParserInput parserInput, ParserOutput parserOutput, int mode, WikiLink wikiLink) throws ParserException {
 		String context = parserInput.getContext();
 		ImageMetadata imageMetadata = parseImageParams(parserInput, parserOutput, mode, wikiLink.getText());
 		if (imageMetadata.getAlt() == null) {

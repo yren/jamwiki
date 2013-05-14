@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
@@ -120,11 +119,7 @@ public class MigrationUtil {
 				topic.setRedirectTo(parserOutput.getRedirect());
 				topic.setTopicType(TopicType.REDIRECT);
 			}
-			try {
-				WikiBase.getDataHandler().writeTopic(topic, topicVersion, parserOutput.getCategories(), parserOutput.getLinks());
-			} catch (DataAccessException e) {
-				throw new MigrationException("Data access exception while processing topic " + virtualWiki + ':' + topic.getName(), e);
-			}
+			WikiBase.getDataHandler().writeTopic(topic, topicVersion, parserOutput.getCategories(), parserOutput.getLinks());
 			successfulImports.add(topic.getName());
 		}
 		return successfulImports;

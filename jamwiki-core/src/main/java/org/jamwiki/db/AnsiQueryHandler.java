@@ -52,6 +52,7 @@ import org.jamwiki.model.WikiUserDetails;
 import org.jamwiki.utils.Pagination;
 import org.jamwiki.utils.WikiLogger;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -289,7 +290,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public boolean authenticateUser(String username, String encryptedPassword) throws SQLException {
+	public boolean authenticateUser(String username, String encryptedPassword) {
 		Object[] args = { username, encryptedPassword };
 		try {
 			DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_USERS_AUTHENTICATION, args, String.class);
@@ -317,7 +318,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteGroupAuthorities(int groupId) throws SQLException {
+	public void deleteGroupAuthorities(int groupId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_GROUP_AUTHORITIES,
 				groupId
@@ -325,9 +326,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 * 
+	 *
 	 */
-	public void deleteGroupMap(GroupMap groupMap) throws SQLException {
+	public void deleteGroupMap(GroupMap groupMap) {
 		if (groupMap.getGroupMapType() == GroupMap.GROUP_MAP_GROUP) {
 			DatabaseConnection.getJdbcTemplate().update(
 					STATEMENT_DELETE_GROUP_MAP_GROUP,
@@ -340,11 +341,11 @@ public class AnsiQueryHandler implements QueryHandler {
 			);
 		}
 	}
-	
+
 	/**
 	 *
 	 */
-	public void deleteInterwiki(Interwiki interwiki) throws SQLException {
+	public void deleteInterwiki(Interwiki interwiki) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_INTERWIKI,
 				interwiki.getInterwikiPrefix()
@@ -354,7 +355,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteRecentChanges(int topicId) throws SQLException {
+	public void deleteRecentChanges(int topicId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_RECENT_CHANGES_TOPIC,
 				topicId
@@ -364,7 +365,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteTopicCategories(int childTopicId) throws SQLException {
+	public void deleteTopicCategories(int childTopicId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_TOPIC_CATEGORIES,
 				childTopicId
@@ -374,7 +375,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteTopicLinks(int topicId) throws SQLException {
+	public void deleteTopicLinks(int topicId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_TOPIC_LINKS,
 				topicId
@@ -384,7 +385,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId) throws SQLException {
+	public void deleteTopicVersion(int topicVersionId, Integer previousTopicVersionId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_LOG_ITEMS_BY_TOPIC_VERSION,
 				topicVersionId
@@ -410,7 +411,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteUserAuthorities(String username) throws SQLException {
+	public void deleteUserAuthorities(String username) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_AUTHORITIES,
 				username
@@ -420,7 +421,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException {
+	public void deleteWatchlistEntry(int virtualWikiId, String topicName, int userId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_WATCHLIST_ENTRY,
 				virtualWikiId,
@@ -488,7 +489,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<WikiFileVersion> getAllWikiFileVersions(WikiFile wikiFile, boolean descending) throws SQLException {
+	public List<WikiFileVersion> getAllWikiFileVersions(WikiFile wikiFile, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = { wikiFile.getFileId() };
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_WIKI_FILE_VERSIONS, args, new WikiFileVersionMapper());
@@ -497,7 +498,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) throws SQLException {
+	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_CATEGORIES,
 				virtualWikiId,
@@ -520,7 +521,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) throws SQLException {
+	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = null;
 		Object[] args = null;
@@ -542,7 +543,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				virtualWiki,
@@ -555,7 +556,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RoleMap> getRoleMapByLogin(String loginFragment) throws SQLException {
+	public List<RoleMap> getRoleMapByLogin(String loginFragment) {
 		if (StringUtils.isBlank(loginFragment)) {
 			return new ArrayList<RoleMap>();
 		}
@@ -583,7 +584,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RoleMap> getRoleMapByRole(String authority,boolean includeInheritedRoles) throws SQLException {
+	public List<RoleMap> getRoleMapByRole(String authority,boolean includeInheritedRoles) {
 		List<Map<String, Object>> results = null;
 		if (includeInheritedRoles) {
 			results = DatabaseConnection.getJdbcTemplate().queryForList(
@@ -630,7 +631,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Role> getRoleMapGroup(String groupName) throws SQLException {
+	public List<Role> getRoleMapGroup(String groupName) {
 		Object[] args = { groupName };
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_GROUP_AUTHORITIES, args, new RoleMapper());
 	}
@@ -638,7 +639,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RoleMap> getRoleMapGroups() throws SQLException {
+	public List<RoleMap> getRoleMapGroups() {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_GROUPS_AUTHORITIES
 		);
@@ -661,7 +662,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Role> getRoleMapUser(String login) throws SQLException {
+	public List<Role> getRoleMapUser(String login) {
 		Object[] args = { login, login };
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_AUTHORITIES_USER, args, new RoleMapper());
 	}
@@ -669,21 +670,21 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Role> getRoles() throws SQLException {
+	public List<Role> getRoles() {
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_ROLES, new RoleMapper());
 	}
 
 	/**
 	 *
 	 */
-	public List<WikiGroup> getGroups() throws SQLException {
+	public List<WikiGroup> getGroups() {
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_GROUPS, new WikiGroupMapper());
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
-	public LinkedHashMap<String, Map<String, String>> getUserPreferencesDefaults() throws SQLException {
+	public LinkedHashMap<String, Map<String, String>> getUserPreferencesDefaults() {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS
 		);
@@ -710,7 +711,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) throws SQLException {
+	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) {
 		// FIXME - sort order ignored
 		// the SQL contains the syntax "is {0} null", which needs to be formatted as a message.
 		Object[] params = {""};
@@ -729,7 +730,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) throws SQLException {
+	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) {
 		Object[] args = {
 				virtualWikiId,
 				pagination.getNumResults(),
@@ -741,7 +742,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<UserBlock> getUserBlocks() throws SQLException {
+	public List<UserBlock> getUserBlocks() {
 		Object[] args = {
 				new Timestamp(System.currentTimeMillis())
 		};
@@ -751,7 +752,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				virtualWiki,
@@ -765,7 +766,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				virtualWiki,
@@ -779,14 +780,14 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<VirtualWiki> getVirtualWikis() throws SQLException {
+	public List<VirtualWiki> getVirtualWikis() {
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_VIRTUAL_WIKIS, new VirtualWikiMapper());
 	}
 
 	/**
 	 *
 	 */
-	public List<String> getWatchlist(int virtualWikiId, int userId) throws SQLException {
+	public List<String> getWatchlist(int virtualWikiId, int userId) {
 		Object[] args = { virtualWikiId, userId };
 		return DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_WATCHLIST, args, String.class);
 	}
@@ -794,7 +795,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) throws SQLException {
+	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) {
 		Object[] args = {
 				virtualWikiId,
 				userId,
@@ -1022,9 +1023,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId) throws SQLException {
+	public void insertCategories(List<Category> categoryList, int virtualWikiId, int topicId) {
 		if (topicId == -1) {
-			throw new SQLException("Invalid topicId passed to method AnsiQueryHandler.insertCategories");
+			throw new InvalidDataAccessApiUsageException("Invalid topicId passed to method AnsiQueryHandler.insertCategories");
 		}
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		for (Category category : categoryList) {
@@ -1037,7 +1038,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertGroupAuthority(int groupId, String authority) throws SQLException {
+	public void insertGroupAuthority(int groupId, String authority) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_GROUP_AUTHORITY,
 				groupId,
@@ -1048,7 +1049,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertGroupMember(String username, int groupId) throws SQLException {
+	public void insertGroupMember(String username, int groupId) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[2] : new int[3];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[2] : new Object[3];
 		int index = 0;
@@ -1072,7 +1073,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertInterwiki(Interwiki interwiki) throws SQLException {
+	public void insertInterwiki(Interwiki interwiki) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_INTERWIKI,
 				interwiki.getInterwikiPrefix(),
@@ -1085,7 +1086,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertLogItem(LogItem logItem, int virtualWikiId) throws SQLException {
+	public void insertLogItem(LogItem logItem, int virtualWikiId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_LOG_ITEM,
 				logItem.getLogDate(),
@@ -1104,7 +1105,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertRecentChange(RecentChange change, int virtualWikiId) throws SQLException {
+	public void insertRecentChange(RecentChange change, int virtualWikiId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_RECENT_CHANGE,
 				change.getTopicVersionId(),
@@ -1128,7 +1129,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertRole(Role role) throws SQLException {
+	public void insertRole(Role role) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_ROLE,
 				role.getAuthority(),
@@ -1139,7 +1140,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertTopic(Topic topic, int virtualWikiId) throws SQLException {
+	public void insertTopic(Topic topic, int virtualWikiId) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[11] : new int[12];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[11] : new Object[12];
 		int index = 0;
@@ -1183,9 +1184,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertTopicLinks(List<Topic> topicLinks, int topicId) throws SQLException {
+	public void insertTopicLinks(List<Topic> topicLinks, int topicId) {
 		if (topicId == -1) {
-			throw new SQLException("Invalid topicId passed to method AnsiQueryHandler.insertTopicLinks");
+			throw new InvalidDataAccessApiUsageException("Invalid topicId passed to method AnsiQueryHandler.insertTopicLinks");
 		}
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		for (Topic topicLink : topicLinks) {
@@ -1198,7 +1199,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	private void insertTopicVersion(TopicVersion topicVersion) throws SQLException {
+	private void insertTopicVersion(TopicVersion topicVersion) {
 		if (topicVersion.getEditDate() == null) {
 			topicVersion.setEditDate(new Timestamp(System.currentTimeMillis()));
 		}
@@ -1243,7 +1244,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException {
+	public void insertTopicVersions(List<TopicVersion> topicVersions) {
 		if (topicVersions.size() == 1) {
 			this.insertTopicVersion(topicVersions.get(0));
 			return;
@@ -1291,7 +1292,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertUserAuthority(String username, String authority) throws SQLException {
+	public void insertUserAuthority(String username, String authority) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_AUTHORITY,
 				username,
@@ -1302,7 +1303,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertUserBlock(UserBlock userBlock) throws SQLException {
+	public void insertUserBlock(UserBlock userBlock) {
 		int[] types =  (this.autoIncrementPrimaryKeys()) ? new int[9] : new int[10];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[9] : new Object[10];
 		int index = 0;
@@ -1342,7 +1343,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertUserDetails(WikiUserDetails userDetails) throws SQLException {
+	public void insertUserDetails(WikiUserDetails userDetails) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_USER,
 				userDetails.getUsername(),
@@ -1353,7 +1354,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertVirtualWiki(VirtualWiki virtualWiki) throws SQLException {
+	public void insertVirtualWiki(VirtualWiki virtualWiki) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[5] : new int[6];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[5] : new Object[6];
 		int index = 0;
@@ -1385,7 +1386,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWatchlistEntry(int virtualWikiId, String topicName, int userId) throws SQLException {
+	public void insertWatchlistEntry(int virtualWikiId, String topicName, int userId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_WATCHLIST_ENTRY,
 				virtualWikiId,
@@ -1397,7 +1398,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException {
+	public void insertWikiFile(WikiFile wikiFile, int virtualWikiId) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[9] : new int[10];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[9] : new Object[10];
 		int index = 0;
@@ -1437,7 +1438,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWikiFileVersion(WikiFileVersion wikiFileVersion) throws SQLException {
+	public void insertWikiFileVersion(WikiFileVersion wikiFileVersion) {
 		if (wikiFileVersion.getUploadDate() == null) {
 			Timestamp uploadDate = new Timestamp(System.currentTimeMillis());
 			wikiFileVersion.setUploadDate(uploadDate);
@@ -1479,7 +1480,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWikiGroup(WikiGroup group) throws SQLException {
+	public void insertWikiGroup(WikiGroup group) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[2] : new int[3];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[2] : new Object[3];
 		int index = 0;
@@ -1505,7 +1506,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWikiUser(WikiUser user) throws SQLException {
+	public void insertWikiUser(WikiUser user) {
 		int[] types = (this.autoIncrementPrimaryKeys()) ? new int[7] : new int[8];
 		Object[] args = (this.autoIncrementPrimaryKeys()) ? new Object[7] : new Object[8];
 		int index = 0;
@@ -1541,7 +1542,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertWikiUserPreferences(WikiUser user, Map<String, String> preferenceDefaults) throws SQLException {
+	public void insertWikiUserPreferences(WikiUser user, Map<String, String> preferenceDefaults) {
 		// Store user preferences
 		Map<String, String> preferences = user.getPreferences();
 		// Only store preferences that are not default
@@ -1564,7 +1565,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException {
+	public void insertUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_USER_PREFERENCE_DEFAULTS,
 				userPreferenceKey,
@@ -1577,7 +1578,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Category> lookupCategoryTopics(int virtualWikiId, String virtualWikiName, String categoryName) throws SQLException {
+	public List<Category> lookupCategoryTopics(int virtualWikiId, String virtualWikiName, String categoryName) {
 		// category name must be lowercase since search is case-insensitive
 		categoryName = categoryName.toLowerCase();
 		Object[] args = { virtualWikiId, categoryName };
@@ -1587,7 +1588,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Map<String, String> lookupConfiguration() throws SQLException {
+	public Map<String, String> lookupConfiguration() {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_CONFIGURATION
 		);
@@ -1606,14 +1607,14 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<Interwiki> lookupInterwikis() throws SQLException {
+	public List<Interwiki> lookupInterwikis() {
 		return DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_INTERWIKIS, new InterwikiMapper());
 	}
 
 	/**
 	 *
 	 */
-	public List<Namespace> lookupNamespaces() throws SQLException {
+	public List<Namespace> lookupNamespaces() {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_NAMESPACES
 		);
@@ -1655,7 +1656,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName) throws SQLException {
+	public Topic lookupTopic(int virtualWikiId, Namespace namespace, String pageName) {
 		if (namespace.getId().equals(Namespace.SPECIAL_ID)) {
 			// invalid namespace
 			return null;
@@ -1687,7 +1688,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Topic lookupTopicById(int topicId) throws SQLException {
+	public Topic lookupTopicById(int topicId) {
 		Object[] args = { topicId };
 		Topic topic = null;
 		List<Topic> topics = DatabaseConnection.getJdbcTemplate().query(STATEMENT_SELECT_TOPIC_BY_ID, args, new TopicMapper());
@@ -1702,7 +1703,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
+	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_TOPIC_BY_TYPE,
 				virtualWikiId,
@@ -1723,7 +1724,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public int lookupTopicCount(int virtualWikiId, int namespaceStart, int namespaceEnd) throws SQLException {
+	public int lookupTopicCount(int virtualWikiId, int namespaceStart, int namespaceEnd) {
 		Object[] args = { virtualWikiId, namespaceStart, namespaceEnd, TopicType.REDIRECT.id() };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_COUNT, args, Integer.class);
@@ -1735,7 +1736,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public String lookupTopicName(int virtualWikiId, String virtualWikiName, Namespace namespace, String pageName) throws SQLException {
+	public String lookupTopicName(int virtualWikiId, String virtualWikiName, Namespace namespace, String pageName) {
 		if (namespace.getId().equals(Namespace.SPECIAL_ID)) {
 			// invalid namespace
 			return null;
@@ -1761,7 +1762,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<String[]> lookupTopicLinks(int virtualWikiId, Topic topic) throws SQLException {
+	public List<String[]> lookupTopicLinks(int virtualWikiId, Topic topic) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_TOPIC_LINKS,
 				virtualWikiId,
@@ -1783,7 +1784,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<String> lookupTopicLinkOrphans(int virtualWikiId, int namespaceId) throws SQLException{
+	public List<String> lookupTopicLinkOrphans(int virtualWikiId, int namespaceId){
 		Object[] args = { virtualWikiId, namespaceId, TopicType.REDIRECT.id() };
 		return DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_TOPIC_LINK_ORPHANS, args, String.class);
 	}
@@ -1791,7 +1792,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted) throws SQLException {
+	public Map<Integer, String> lookupTopicNames(int virtualWikiId, boolean includeDeleted) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_TOPIC_NAMES,
 				virtualWikiId
@@ -1808,7 +1809,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public TopicVersion lookupTopicVersion(int topicVersionId) throws SQLException {
+	public TopicVersion lookupTopicVersion(int topicVersionId) {
 		Object[] args = { topicVersionId };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_VERSION, args, new TopicVersionMapper());
@@ -1821,7 +1822,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public Integer lookupTopicVersionNextId(int topicVersionId) throws SQLException {
+	public Integer lookupTopicVersionNextId(int topicVersionId) {
 		Object[] args = { topicVersionId };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_TOPIC_VERSION_NEXT_ID, args, Integer.class);
@@ -1834,7 +1835,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	private Map<String, String> lookupUserPreferencesDefaults() throws SQLException {
+	private Map<String, String> lookupUserPreferencesDefaults() {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_USER_PREFERENCES_DEFAULTS);
 		Map<String, String> defaults = new HashMap<String, String>();
 		for (Map<String, Object> row : results) {
@@ -1846,7 +1847,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public WikiFile lookupWikiFile(int virtualWikiId, String virtualWikiName, int topicId) throws SQLException {
+	public WikiFile lookupWikiFile(int virtualWikiId, String virtualWikiName, int topicId) {
 		Object[] args = { virtualWikiId, topicId };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_FILE, args, new WikiFileMapper(virtualWikiName));
@@ -1863,7 +1864,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	 * @param virtualWikiId The virtual wiki id for the virtual wiki of the files
 	 *  being retrieved.
 	 */
-	public int lookupWikiFileCount(int virtualWikiId) throws SQLException {
+	public int lookupWikiFileCount(int virtualWikiId) {
 		Object[] args = { virtualWikiId };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_FILE_COUNT, args, Integer.class);
@@ -1874,9 +1875,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 * 
+	 *
 	 */
-	public GroupMap lookupGroupMapGroup(int groupId) throws SQLException {
+	public GroupMap lookupGroupMapGroup(int groupId) {
 		if (lookupWikiGroupById(groupId) == null) {
 			return null;
 		}
@@ -1888,9 +1889,9 @@ public class AnsiQueryHandler implements QueryHandler {
 	}
 
 	/**
-	 * 
+	 *
 	 */
-	public GroupMap lookupGroupMapUser(String userLogin) throws SQLException {
+	public GroupMap lookupGroupMapUser(String userLogin) {
 		Object[] args = { userLogin };
 		List<Integer> groupIds = DatabaseConnection.getJdbcTemplate().queryForList(STATEMENT_SELECT_GROUP_MAP_USER, args, Integer.class);
 		GroupMap groupMap = new GroupMap(userLogin);
@@ -1904,7 +1905,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public WikiGroup lookupWikiGroup(String groupName) throws SQLException {
+	public WikiGroup lookupWikiGroup(String groupName) {
 		Object[] args = { groupName };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_GROUP, args, new WikiGroupMapper());
@@ -1917,7 +1918,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public WikiGroup lookupWikiGroupById(int groupId) throws SQLException {
+	public WikiGroup lookupWikiGroupById(int groupId) {
 		Object[] args = { groupId };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_GROUP_BY_ID, args, new WikiGroupMapper());
@@ -1926,11 +1927,11 @@ public class AnsiQueryHandler implements QueryHandler {
 			return null;
 		}
 	}
-	
+
 	/**
 	 *
 	 */
-	public WikiUser lookupWikiUser(int userId) throws SQLException {
+	public WikiUser lookupWikiUser(int userId) {
 		WikiUser user = null;
 		Object[] args = { userId };
 		try {
@@ -1952,11 +1953,11 @@ public class AnsiQueryHandler implements QueryHandler {
 		user.setPreferences(preferences);
 		return user;
 	}
-	
+
 	/**
 	 *
 	 */
-	public int lookupWikiUser(String username) throws SQLException {
+	public int lookupWikiUser(String username) {
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(
 					STATEMENT_SELECT_WIKI_USER_LOGIN,
@@ -1969,7 +1970,7 @@ public class AnsiQueryHandler implements QueryHandler {
 		}
 	}
 
-	public WikiUser lookupPwResetChallengeData(String username) throws SQLException {
+	public WikiUser lookupPwResetChallengeData(String username) {
 		WikiUser user = this.lookupWikiUser(this.lookupWikiUser(username));
 		if (user == null) {
 			return null;
@@ -1988,11 +1989,11 @@ public class AnsiQueryHandler implements QueryHandler {
 		}
 		return user;
 	}
-	
+
 	/**
 	 * Return a count of all wiki users.
 	 */
-	public int lookupWikiUserCount() throws SQLException {
+	public int lookupWikiUserCount() {
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_USER_COUNT, Integer.class);
 		} catch (IncorrectResultSizeDataAccessException e) {
@@ -2004,7 +2005,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public String lookupWikiUserEncryptedPassword(String username) throws SQLException {
+	public String lookupWikiUserEncryptedPassword(String username) {
 		Object[] args = { username };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_WIKI_USER_DETAILS_PASSWORD, args, String.class);
@@ -2017,7 +2018,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public List<String> lookupWikiUsers(Pagination pagination) throws SQLException {
+	public List<String> lookupWikiUsers(Pagination pagination) {
 		Object[] args = { pagination.getNumResults(), pagination.getOffset() };
 		return DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_WIKI_USERS,
@@ -2029,7 +2030,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void reloadLogItems(int virtualWikiId) throws SQLException {
+	public void reloadLogItems(int virtualWikiId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_LOG_ITEMS,
 				virtualWikiId
@@ -2096,7 +2097,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void orderTopicVersions(Topic topic, int virtualWikiId, List<Integer> topicVersionIdList) throws SQLException {
+	public void orderTopicVersions(Topic topic, int virtualWikiId, List<Integer> topicVersionIdList) {
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		Integer previousTopicVersionId = null;
 		for (int topicVersionId : topicVersionIdList) {
@@ -2118,7 +2119,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void reloadRecentChanges(int limit) throws SQLException {
+	public void reloadRecentChanges(int limit) {
 		DatabaseConnection.getJdbcTemplate().update(STATEMENT_DELETE_RECENT_CHANGES);
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_RECENT_CHANGES_VERSIONS,
@@ -2147,7 +2148,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateConfiguration(Map<String, String> configuration) throws SQLException {
+	public void updateConfiguration(Map<String, String> configuration) {
 		DatabaseConnection.getJdbcTemplate().update(STATEMENT_DELETE_CONFIGURATION);
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		for (Map.Entry<String, String> entry : configuration.entrySet()) {
@@ -2166,7 +2167,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateNamespace(Namespace namespace) throws SQLException {
+	public void updateNamespace(Namespace namespace) {
 		// update if the ID is specified AND a namespace with the same ID already exists
 		boolean isUpdate = (namespace.getId() != null && this.lookupNamespaces().indexOf(namespace) != -1);
 		// if adding determine the namespace ID(s)
@@ -2192,7 +2193,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId) throws SQLException {
+	public void updateNamespaceTranslations(List<Namespace> namespaces, String virtualWiki, int virtualWikiId) {
 		// delete any existing translation then add the new one
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_NAMESPACE_TRANSLATIONS,
@@ -2216,18 +2217,18 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateRole(Role role) throws SQLException {
+	public void updateRole(Role role) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_ROLE,
 				role.getDescription(),
 				role.getAuthority()
 		);
 	}
-	
+
 	/**
 	 *
 	 */
-	public void updateTopic(Topic topic, int virtualWikiId) throws SQLException {
+	public void updateTopic(Topic topic, int virtualWikiId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_TOPIC,
 				virtualWikiId,
@@ -2248,7 +2249,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateTopicNamespaces(List<Topic> topics) throws SQLException {
+	public void updateTopicNamespaces(List<Topic> topics) {
 		List<Object[]> batchArgs = new ArrayList<Object[]>();
 		for (Topic topic : topics) {
 			Object[] args = {
@@ -2266,7 +2267,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateTopicVersion(TopicVersion topicVersion) throws SQLException {
+	public void updateTopicVersion(TopicVersion topicVersion) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_TOPIC_VERSION,
 				topicVersion.getTopicId(),
@@ -2286,7 +2287,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateUserBlock(UserBlock userBlock) throws SQLException {
+	public void updateUserBlock(UserBlock userBlock) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_USER_BLOCK,
 				userBlock.getWikiUserId(),
@@ -2305,7 +2306,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateUserDetails(WikiUserDetails userDetails) throws SQLException {
+	public void updateUserDetails(WikiUserDetails userDetails) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_USER,
 				userDetails.getPassword(),
@@ -2317,7 +2318,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateVirtualWiki(VirtualWiki virtualWiki) throws SQLException {
+	public void updateVirtualWiki(VirtualWiki virtualWiki) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_VIRTUAL_WIKI,
 				(virtualWiki.isDefaultRootTopicName() ? null : virtualWiki.getRootTopicName()),
@@ -2331,7 +2332,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateWikiFile(WikiFile wikiFile, int virtualWikiId) throws SQLException {
+	public void updateWikiFile(WikiFile wikiFile, int virtualWikiId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_WIKI_FILE,
 				virtualWikiId,
@@ -2350,7 +2351,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateWikiGroup(WikiGroup group) throws SQLException {
+	public void updateWikiGroup(WikiGroup group) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_GROUP,
 				group.getName(),
@@ -2362,7 +2363,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateWikiUser(WikiUser user) throws SQLException {
+	public void updateWikiUser(WikiUser user) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_WIKI_USER,
 				user.getUsername(),
@@ -2377,7 +2378,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateWikiUserPreferences(WikiUser user) throws SQLException {
+	public void updateWikiUserPreferences(WikiUser user) {
 		Map<String, String> preferenceDefaults = this.lookupUserPreferencesDefaults();
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_USER_PREFERENCES,
@@ -2403,7 +2404,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) throws SQLException {
+	public void updateUserPreferenceDefault(String userPreferenceKey, String userPreferenceDefaultValue, String userPreferenceGroupKey, int sequenceNr) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_USER_PREFERENCE_DEFAULTS,
 				userPreferenceDefaultValue,
@@ -2412,8 +2413,11 @@ public class AnsiQueryHandler implements QueryHandler {
 				userPreferenceKey
 		);
 	}
-	
-	public boolean existsUserPreferenceDefault(String userPreferenceKey) throws SQLException {
+
+	/**
+	 *
+	 */
+	public boolean existsUserPreferenceDefault(String userPreferenceKey) {
 		HashMap<String, Map<String, String>> defaultPrefs = this.getUserPreferencesDefaults();
 		for (Map<String, String> group: defaultPrefs.values()) {
 			if (group.containsKey(userPreferenceKey)) {
@@ -2423,7 +2427,10 @@ public class AnsiQueryHandler implements QueryHandler {
 		return false;
 	}
 
-	public void updatePwResetChallengeData(WikiUser user) throws SQLException {
+	/**
+	 *
+	 */
+	public void updatePwResetChallengeData(WikiUser user) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_UPDATE_PW_RESET_CHALLENGE_DATA,
 				user.getChallengeValue(),
@@ -2436,7 +2443,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void insertImage(ImageData imageData, boolean isResized) throws SQLException {
+	public void insertImage(ImageData imageData, boolean isResized) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_INSERT_FILE_DATA,
 				imageData.fileVersionId,
@@ -2450,7 +2457,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public void deleteResizedImages(int fileId) throws SQLException {
+	public void deleteResizedImages(int fileId) {
 		DatabaseConnection.getJdbcTemplate().update(
 				STATEMENT_DELETE_RESIZED_IMAGES,
 				fileId
@@ -2460,7 +2467,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public ImageData getImageInfo(int fileId, int resized) throws SQLException {
+	public ImageData getImageInfo(int fileId, int resized) {
 		Object[] args = { fileId, resized };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_INFO, args, new ImageDataMapper(false));
@@ -2473,7 +2480,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public ImageData getImageData(int fileId, int resized) throws SQLException {
+	public ImageData getImageData(int fileId, int resized) {
 		Object[] args = { fileId, resized };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_DATA, args, new ImageDataMapper(true));
@@ -2486,7 +2493,7 @@ public class AnsiQueryHandler implements QueryHandler {
 	/**
 	 *
 	 */
-	public ImageData getImageVersionData(int fileVersionId, int resized) throws SQLException {
+	public ImageData getImageVersionData(int fileVersionId, int resized) {
 		Object[] args = { fileVersionId, resized };
 		try {
 			return DatabaseConnection.getJdbcTemplate().queryForObject(STATEMENT_SELECT_FILE_VERSION_DATA, args, new ImageDataMapper(true));

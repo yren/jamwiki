@@ -17,7 +17,6 @@
 package org.jamwiki.validator;
 
 import javax.servlet.http.HttpServletRequest;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.UserBlock;
 import org.jamwiki.model.WikiUser;
@@ -43,12 +42,7 @@ public class UserBlockValidator implements RequestValidator {
 	public UserBlockValidatorInfo validate(HttpServletRequest request) {
 		WikiUser wikiUser = ServletUtil.currentWikiUser();
 		Integer wikiUserId = (wikiUser.getUserId() > 0) ? wikiUser.getUserId() : null;
-		UserBlock userBlock = null;
-		try {
-			userBlock = WikiBase.getDataHandler().lookupUserBlock(wikiUserId, request.getRemoteAddr());
-		} catch (DataAccessException e) {
-			logger.error("Data access exception while retrieving user block status, e");
-		}
+		UserBlock userBlock = WikiBase.getDataHandler().lookupUserBlock(wikiUserId, request.getRemoteAddr());
 		return new UserBlockValidatorInfo(userBlock);
 	}
 }

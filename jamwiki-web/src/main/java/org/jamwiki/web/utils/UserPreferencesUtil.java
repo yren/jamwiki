@@ -21,7 +21,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiConfiguration;
 import org.jamwiki.model.WikiUser;
@@ -172,11 +171,7 @@ public class UserPreferencesUtil {
 	 */
 	private Map<String, Map<String, String>> getDefaults() {
 		if (this.defaults == null) {
-			try {
-				this.defaults = (Map<String, Map<String, String>>) WikiBase.getDataHandler().getUserPreferencesDefaults();
-			} catch (DataAccessException e) {
-				throw new IllegalStateException("Failure while retrieving default user preferences", e);
-			}
+			this.defaults = (Map<String, Map<String, String>>) WikiBase.getDataHandler().getUserPreferencesDefaults();
 		}
 		return this.defaults;
 	}

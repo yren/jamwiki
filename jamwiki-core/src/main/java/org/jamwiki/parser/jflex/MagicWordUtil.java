@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiVersion;
@@ -241,7 +240,7 @@ public class MagicWordUtil {
 	 * word value.  See http://meta.wikimedia.org/wiki/Help:Magic_words for a
 	 * list of Mediawiki magic words.
 	 */
-	protected static String processMagicWord(ParserInput parserInput, ParserOutput parserOutput, int mode, String magicWord, String magicWordArguments) throws DataAccessException, ParserException {
+	protected static String processMagicWord(ParserInput parserInput, ParserOutput parserOutput, int mode, String magicWord, String magicWordArguments) throws ParserException {
 		String[] magicWordArgumentArray = JFlexParserUtil.retrieveTokenizedArgumentArray(parserInput, parserOutput, mode, magicWordArguments);
 		if (MAGIC_WORDS_DATETIME.contains(magicWord)) {
 			return processMagicWordDateTime(parserInput, magicWord);
@@ -260,7 +259,7 @@ public class MagicWordUtil {
 	/**
 	 * Process date & time magic words.
 	 */
-	private static String processMagicWordDateTime(ParserInput parserInput, String name) throws DataAccessException {
+	private static String processMagicWordDateTime(ParserInput parserInput, String name) {
 		SimpleDateFormat formatter = new SimpleDateFormat();
 		Date current = new Date(System.currentTimeMillis());
 		// local date values
@@ -369,7 +368,7 @@ public class MagicWordUtil {
 	/**
 	 * Process statistic magic words.
 	 */
-	private static String processMagicWordStatistics(ParserInput parserInput, String name) throws DataAccessException {
+	private static String processMagicWordStatistics(ParserInput parserInput, String name) {
 		NumberFormat numFormatter = NumberFormat.getInstance();
 		if (name.equals(MAGIC_CURRENT_VERSION)) {
 			return WikiVersion.CURRENT_WIKI_VERSION;
@@ -412,7 +411,7 @@ public class MagicWordUtil {
 	/**
 	 * Process page value magic words.
 	 */
-	private static String processMagicWordPageNames(ParserInput parserInput, String name, String[] magicWordArgumentArray) throws DataAccessException {
+	private static String processMagicWordPageNames(ParserInput parserInput, String name, String[] magicWordArgumentArray) {
 		// if there is an argument then use it as the topic name, otherwise
 		// default to the current topic.
 		String topic = parserInput.getTopicName();
@@ -466,7 +465,7 @@ public class MagicWordUtil {
 	/**
 	 * Process namespace magic words.
 	 */
-	private static String processMagicWordNamespaces(ParserInput parserInput, String name, String[] magicWordArgumentArray) throws DataAccessException {
+	private static String processMagicWordNamespaces(ParserInput parserInput, String name, String[] magicWordArgumentArray) {
 		// if there is an argument then use it as the topic name, otherwise
 		// default to the current topic.
 		String topic = parserInput.getTopicName();
@@ -502,7 +501,7 @@ public class MagicWordUtil {
 	/**
 	 * Process metadata magic words.
 	 */
-	private static String processMagicWordMetadata(ParserInput parserInput, String name) throws DataAccessException {
+	private static String processMagicWordMetadata(ParserInput parserInput, String name) {
 		SimpleDateFormat formatter = new SimpleDateFormat();
 		TimeZone utc = TimeZone.getTimeZone("GMT+00");
 		Topic topic = WikiBase.getDataHandler().lookupTopic(parserInput.getVirtualWiki(), parserInput.getTopicName(), false);

@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.model.WikiFileVersion;
 import org.jamwiki.parser.image.ImageMetadata;
 import org.jamwiki.parser.image.ImageUtil;
@@ -67,9 +66,6 @@ public class ImageLinkTag extends TagSupport {
 				// FIXME - display a broken image icon or something better
 				logger.warn("I/O Failure while parsing image link: " + e.getMessage(), e);
 				html = this.value;
-			} catch (DataAccessException e) {
-				logger.error("Failure while building url " + html + " with value " + this.value, e);
-				throw new JspException(e);
 			}
 			if (html != null) {
 				this.pageContext.getOut().print(html);

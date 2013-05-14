@@ -25,7 +25,6 @@ import java.util.Locale;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.Namespace;
@@ -136,7 +135,7 @@ public abstract class ParserFunctionUtil {
 	 * function result.  See http://meta.wikimedia.org/wiki/Help:Magic_words for a
 	 * list of Mediawiki parser functions.
 	 */
-	protected static String processParserFunction(ParserInput parserInput, ParserOutput parserOutput, int mode, String parserFunction, String parserFunctionArguments) throws DataAccessException, ParserException {
+	protected static String processParserFunction(ParserInput parserInput, ParserOutput parserOutput, int mode, String parserFunction, String parserFunctionArguments) throws ParserException {
 		String[] parserFunctionArgumentArray = JFlexParserUtil.retrieveTokenizedArgumentArray(parserInput, parserOutput, mode, parserFunctionArguments);
 		if (parserFunction.equals(PARSER_FUNCTION_ANCHOR_ENCODE)) {
 			return Utilities.encodeAndEscapeTopicName(parserFunctionArgumentArray[0]);
@@ -207,7 +206,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{filepath}} parser function.
 	 */
-	private static String parseFilePath(ParserInput parserInput, String[] parserFunctionArgumentArray) throws DataAccessException {
+	private static String parseFilePath(ParserInput parserInput, String[] parserFunctionArgumentArray) {
 		// pre-pend the image namespace to the file name
 		String filename = Namespace.namespace(Namespace.FILE_ID).getLabel(parserInput.getVirtualWiki()) + Namespace.SEPARATOR + parserFunctionArgumentArray[0];
 		String result = ImageUtil.buildImageFileUrl(parserInput.getContext(), parserInput.getVirtualWiki(), filename, true);
@@ -224,7 +223,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{fileurl:}} parser function.
 	 */
-	private static String parseFileUrl(ParserInput parserInput, String[] parserFunctionArgumentArray) throws DataAccessException {
+	private static String parseFileUrl(ParserInput parserInput, String[] parserFunctionArgumentArray) {
 		WikiLink wikiLink = LinkUtil.parseWikiLink(parserInput.getContext(), parserInput.getVirtualWiki(), parserFunctionArgumentArray[0]);
 		String result = wikiLink.toRelativeUrl();
 		result = LinkUtil.normalize(Environment.getValue(Environment.PROP_SERVER_URL) + result);
@@ -237,7 +236,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{#expr:}} parser function.  Usage: {{#expr: expression }}.
 	 */
-	private static String parseExpr(ParserInput parserInput, String[] parserFunctionArgumentArray) throws DataAccessException,  ParserException {
+	private static String parseExpr(ParserInput parserInput, String[] parserFunctionArgumentArray) throws ParserException {
 		String expr = parserFunctionArgumentArray[0];
 		if (StringUtils.isBlank(expr)) {
 			return "";
@@ -254,7 +253,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{#if:}} parser function.  Usage: {{#if: test | true | false}}.
 	 */
-	private static String parseIf(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws DataAccessException,  ParserException {
+	private static String parseIf(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws ParserException {
 		boolean condition = ((parserFunctionArgumentArray.length >= 1) ? !StringUtils.isBlank(parserFunctionArgumentArray[0]) : false);
 		// parse to handle any embedded templates
 		if (condition) {
@@ -267,7 +266,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{#ifeq:}} parser function.  Usage: {{#ifeq: value1 | value2 | true | false}}.
 	 */
-	private static String parseIfEqual(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws DataAccessException,  ParserException {
+	private static String parseIfEqual(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws ParserException {
 		String arg1 = ((parserFunctionArgumentArray.length >= 1) ? parserFunctionArgumentArray[0] : "");
 		String arg2 = ((parserFunctionArgumentArray.length >= 2) ? parserFunctionArgumentArray[1] : "");
 		String result1 = ((parserFunctionArgumentArray.length >= 3) ? parserFunctionArgumentArray[2] : "");
@@ -290,7 +289,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{#ifexist:}} parser function.  Usage: {{#ifexist: topic | exists | does not exist}}.
 	 */
-	private static String parseIfExist(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws DataAccessException,  ParserException {
+	private static String parseIfExist(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws ParserException {
 		if (parserFunctionArgumentArray.length < 1) {
 			return "";
 		}
@@ -306,7 +305,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{#ifexpr:}} parser function.  Usage: {{#if: expr | true | false}}.
 	 */
-	private static String parseIfExpr(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws DataAccessException,  ParserException {
+	private static String parseIfExpr(ParserInput parserInput, ParserOutput parserOutput, String[] parserFunctionArgumentArray) throws ParserException {
 		String expr = parserFunctionArgumentArray[0];
 		boolean condition = false;
 		if (!StringUtils.isBlank(expr)) {
@@ -353,7 +352,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{localurl:}} parser function.
 	 */
-	private static String parseLocalUrl(ParserInput parserInput, String[] parserFunctionArgumentArray) throws DataAccessException {
+	private static String parseLocalUrl(ParserInput parserInput, String[] parserFunctionArgumentArray) {
 		WikiLink wikiLink = LinkUtil.parseWikiLink(parserInput.getContext(), parserInput.getVirtualWiki(), parserFunctionArgumentArray[0]);
 		String result = wikiLink.toRelativeUrl();
 		if (parserFunctionArgumentArray.length > 1 && !StringUtils.isBlank(parserFunctionArgumentArray[1])) {
@@ -379,7 +378,7 @@ public abstract class ParserFunctionUtil {
 	/**
 	 * Parse the {{ns:}} and {{nse:}} parser functions.
 	 */
-	private static String parseNamespace(ParserInput parserInput, String[] parserFunctionArgumentArray, boolean escape) throws DataAccessException {
+	private static String parseNamespace(ParserInput parserInput, String[] parserFunctionArgumentArray, boolean escape) {
 		int namespaceId = Namespace.MAIN_ID;
 		if (parserFunctionArgumentArray.length > 0 && !StringUtils.isBlank(parserFunctionArgumentArray[0])) {
 			namespaceId = NumberUtils.toInt(parserFunctionArgumentArray[0], -10);

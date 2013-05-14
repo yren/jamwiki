@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.WikiFile;
 import org.jamwiki.model.WikiFileVersion;
@@ -66,9 +65,6 @@ public class ImageUrlTag extends TagSupport {
 			String url = ImageUtil.buildImageUrl(request.getContextPath(), relativeFileUrl, false);
 			this.pageContext.getOut().print(url);
 		} catch (IOException e) {
-			logger.error("Failure while building image url for topic " + this.topicName, e);
-			throw new JspException(e);
-		} catch (DataAccessException e) {
 			logger.error("Failure while building image url for topic " + this.topicName, e);
 			throw new JspException(e);
 		}

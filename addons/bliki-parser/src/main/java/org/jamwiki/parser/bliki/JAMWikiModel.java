@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.Namespace;
 import org.jamwiki.model.Topic;
@@ -124,41 +123,35 @@ public class JAMWikiModel extends AbstractWikiModel {
 	 *
 	 */
 	public void appendInternalLink(String topic, String hashSection, String topicDescription, String cssClass, boolean parseRecursive, String virtualWiki) {
-		try {
-			WikiLink wikiLink = new WikiLink(fContextPath, virtualWiki, topic);
-			if (hashSection != null) {
-				wikiLink.setSection(hashSection);
-			}
-			String destination = wikiLink.getDestination();
-			String section = wikiLink.getSection();
-			String query = wikiLink.getQuery();
-			String href = buildTopicUrlNoEdit(fContextPath, virtualWiki, destination, section, query);
-			String style = "";
-			if (StringUtils.isBlank(topic) && !StringUtils.isBlank(section)) {
-				// do not check existence for section links
-			} else {
-				String articleName = topic.replace('_', ' ');
-				if (LinkUtil.isExistingArticle(virtualWiki, articleName) == null && !wikiLink.isSpecial()) {
-					style = "edit";
-					href = LinkUtil.buildEditLinkUrl(fContextPath, virtualWiki, topic, query, -1);
-				}
-			}
-			WPATag aTagNode = new WPATag();
-			aTagNode.addAttribute("href", href, true);
-			aTagNode.addAttribute("class", style, true);
-			aTagNode.addObjectAttribute("wikilink", topic);
-
-			pushNode(aTagNode);
-			if (parseRecursive) {
-				WikipediaParser.parseRecursive(topicDescription.trim(), this, false, true);
-			} else {
-				aTagNode.addChild(new ContentToken(topicDescription));
-			}
-			popNode();
-		} catch (DataAccessException e1) {
-			e1.printStackTrace();
-			append(new ContentToken(topicDescription));
+		WikiLink wikiLink = new WikiLink(fContextPath, virtualWiki, topic);
+		if (hashSection != null) {
+			wikiLink.setSection(hashSection);
 		}
+		String destination = wikiLink.getDestination();
+		String section = wikiLink.getSection();
+		String query = wikiLink.getQuery();
+		String href = buildTopicUrlNoEdit(fContextPath, virtualWiki, destination, section, query);
+		String style = "";
+		if (StringUtils.isBlank(topic) && !StringUtils.isBlank(section)) {
+			// do not check existence for section links
+		} else {
+			String articleName = topic.replace('_', ' ');
+			if (LinkUtil.isExistingArticle(virtualWiki, articleName) == null && !wikiLink.isSpecial()) {
+				style = "edit";
+				href = LinkUtil.buildEditLinkUrl(fContextPath, virtualWiki, topic, query, -1);
+			}
+		}
+		WPATag aTagNode = new WPATag();
+		aTagNode.addAttribute("href", href, true);
+		aTagNode.addAttribute("class", style, true);
+		aTagNode.addObjectAttribute("wikilink", topic);
+		pushNode(aTagNode);
+		if (parseRecursive) {
+			WikipediaParser.parseRecursive(topicDescription.trim(), this, false, true);
+		} else {
+			aTagNode.addChild(new ContentToken(topicDescription));
+		}
+		popNode();
 	}
 
 	/**
@@ -390,10 +383,6 @@ public class JAMWikiModel extends AbstractWikiModel {
 	 * Utility method for determining if a given prefix represents a virtual wiki.
 	 */
 	public boolean isVirtualWiki(String namespace) {
-		try {
-			return (WikiBase.getDataHandler().lookupVirtualWiki(namespace) != null);
-		} catch (DataAccessException e) {
-			return false;
-		}
+		return (WikiBase.getDataHandler().lookupVirtualWiki(namespace) != null);
 	}
 }

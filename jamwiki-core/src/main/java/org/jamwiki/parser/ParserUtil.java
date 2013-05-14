@@ -17,7 +17,6 @@
 package org.jamwiki.parser;
 
 import java.util.Locale;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.Topic;
 import org.jamwiki.utils.WikiLogger;
@@ -172,12 +171,7 @@ public class ParserUtil {
 	 * that code to avoid duplication.
 	 */
 	private static String[] executeSliceOrSplice(ParserOutput parserOutput, String context, Locale locale, String virtualWiki, String topicName, int targetSection, String replacementText, boolean isSlice) throws ParserException {
-		Topic topic = null;
-		try {
-			topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
-		} catch (DataAccessException e) {
-			throw new ParserException(e);
-		}
+		Topic topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
 		if (topic == null || topic.getTopicContent() == null) {
 			return null;
 		}

@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.model.VirtualWiki;
 import org.jamwiki.parser.LinkUtil;
 import org.jamwiki.parser.WikiLink;
@@ -73,9 +72,6 @@ public class LinkTag extends BodyTagSupport {
 				url = LinkUtil.buildTopicUrl(wikiLink);
 			}
 			this.pageContext.getOut().print(url);
-		} catch (DataAccessException e) {
-			logger.error("Failure while building url " + url + " with value " + this.value + " and text " + this.text, e);
-			throw new JspException(e);
 		} catch (IOException e) {
 			logger.error("Failure while building url " + url + " with value " + this.value + " and text " + this.text, e);
 			throw new JspException(e);

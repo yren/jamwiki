@@ -20,7 +20,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.utils.WikiLogger;
 
@@ -188,7 +187,7 @@ public class Namespace implements Serializable {
 	 * method is called with Namespace.USER_COMMENTS or Namespace.USER as an
 	 * argument, Namespace.USER_COMMENTS will be returned.
 	 */
-	public static Namespace findCommentsNamespace(Namespace namespace) throws DataAccessException {
+	public static Namespace findCommentsNamespace(Namespace namespace) {
 		if (namespace == null) {
 			return null;
 		}
@@ -231,12 +230,7 @@ public class Namespace implements Serializable {
 	 *  match is found or if an error is returned.
 	 */
 	public static Namespace namespace(int namespaceId) {
-		try {
-			return WikiBase.getDataHandler().lookupNamespaceById(namespaceId);
-		} catch (DataAccessException e) {
-			logger.error("Failure while retrieving namespace for ID: " + namespaceId, e);
-		}
-		return null;
+		return WikiBase.getDataHandler().lookupNamespaceById(namespaceId);
 	}
 
 	/**

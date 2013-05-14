@@ -17,7 +17,6 @@
 package org.jamwiki.parser.jflex;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiException;
 import org.jamwiki.model.Namespace;
@@ -138,9 +137,6 @@ public class WikiLinkTag implements JFlexParserTag {
 			}
 			// do not escape text html - already done by parser
 			return LinkUtil.buildInternalLinkHtml(wikiLink, wikiLink.getText(), null, null, false);
-		} catch (DataAccessException e) {
-			logger.error("Failure while parsing link " + raw, e);
-			return "";
 		} catch (ParserException e) {
 			logger.error("Failure while parsing link " + raw, e);
 			return "";

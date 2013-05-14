@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.JavaVersion;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiConfiguration;
@@ -186,8 +185,6 @@ public class SetupServlet extends JAMWikiServlet {
 			}
 			Environment.saveConfiguration();
 			result = true;
-		} catch (DataAccessException e) {
-			pageInfo.addError(new WikiMessage("error.unknown", e.getMessage()));
 		} catch (WikiException e) {
 			pageInfo.addError(e.getWikiMessage());
 		}

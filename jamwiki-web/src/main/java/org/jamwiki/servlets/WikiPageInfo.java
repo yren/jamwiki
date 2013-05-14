@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiMessage;
@@ -329,7 +328,7 @@ public class WikiPageInfo {
 	 * Return a map whose keys are virtual wikis, and whose values is a mapping of
 	 * namespace id and value for the virtual wiki.
 	 */
-	public Map<String, Map<String, String>> getNamespaces() throws DataAccessException {
+	public Map<String, Map<String, String>> getNamespaces() {
 		Map<String, Map<String, String>> results = new HashMap<String, Map<String, String>>();
 		List<Namespace> namespaces = WikiBase.getDataHandler().lookupNamespaces();
 		List<VirtualWiki> virtualWikis = WikiBase.getDataHandler().getVirtualWikiList();
@@ -578,12 +577,7 @@ public class WikiPageInfo {
 	 * name.
 	 */
 	public VirtualWiki getVirtualWiki() {
-		VirtualWiki virtualWiki = null;
-		try {
-			virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(this.getVirtualWikiName());
-		} catch (DataAccessException e) {
-			logger.error("Failure while retrieving virtual wiki: " + this.getVirtualWikiName(), e);
-		}
+		VirtualWiki virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(this.getVirtualWikiName());
 		return (virtualWiki == null) ? VirtualWiki.defaultVirtualWiki() : virtualWiki;
 	}
 

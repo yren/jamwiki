@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
@@ -59,7 +58,7 @@ public class LinkToServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void view(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException, WikiException {
+	private void view(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws WikiException {
 		String virtualWiki = pageInfo.getVirtualWikiName();
 		String topicName = WikiUtil.getTopicFromRequest(request);
 		if (StringUtils.isBlank(topicName)) {

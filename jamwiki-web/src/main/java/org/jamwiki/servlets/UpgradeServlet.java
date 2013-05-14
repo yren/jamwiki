@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiException;
 import org.jamwiki.WikiMessage;
@@ -92,15 +91,9 @@ public class UpgradeServlet extends JAMWikiServlet {
 			WikiMessage wm = new WikiMessage("upgrade.caption.upgradecomplete");
 			VirtualWiki virtualWiki = VirtualWiki.defaultVirtualWiki();
 			WikiLink wikiLink = new WikiLink(request.getContextPath(), virtualWiki.getName(), virtualWiki.getRootTopicName());
-			try {
-				String htmlLink = LinkUtil.buildInternalLinkHtml(wikiLink, virtualWiki.getRootTopicName(), null, null, true);
-				// do not escape the HTML link
-				wm.setParamsWithoutEscaping(new String[]{htmlLink});
-			} catch (DataAccessException e) {
-				// building a link to the start page shouldn't fail, but if it does display a message
-				wm = new WikiMessage("upgrade.error.nonfatal", e.toString());
-				logger.warn("Upgrade complete, but unable to build redirect link to the start page.", e);
-			}
+			String htmlLink = LinkUtil.buildInternalLinkHtml(wikiLink, virtualWiki.getRootTopicName(), null, null, true);
+			// do not escape the HTML link
+			wm.setParamsWithoutEscaping(new String[]{htmlLink});
 			next.addObject("successMessage", wm);
 			// force logout to ensure current user will be re-validated.  this is
 			// necessary because the upgrade may have changed underlying data structures.

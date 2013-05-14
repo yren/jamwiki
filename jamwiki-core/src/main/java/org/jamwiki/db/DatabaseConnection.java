@@ -128,7 +128,7 @@ public class DatabaseConnection {
 	 * @param sql The SQL to execute.
 	 * @return Returns the result of the query or 1 if no result is found.
 	 */
-	protected static int executeSequenceQuery(String sql) throws SQLException {
+	protected static int executeSequenceQuery(String sql) {
 		try {
 			Integer result = DatabaseConnection.getJdbcTemplate().queryForObject(sql, Integer.class);
 			return (result == null) ? 1 : result.intValue() + 1;

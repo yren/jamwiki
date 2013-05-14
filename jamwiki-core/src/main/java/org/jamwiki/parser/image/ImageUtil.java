@@ -29,7 +29,6 @@ import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -164,9 +163,8 @@ public abstract class ImageUtil {
 	 *  PROP_SERVER_URL property.
 	 * @return The URL to an uploaded file (not the file's topic page) or
 	 *  <code>null</code> if the file does not exist.
-	 * @throws DataAccessException Thrown if any error occurs while retrieving file info.
 	 */
-	public static String buildImageFileUrl(String context, String virtualWiki, String topicName, boolean forceAbsoluteUrl) throws DataAccessException {
+	public static String buildImageFileUrl(String context, String virtualWiki, String topicName, boolean forceAbsoluteUrl) {
 		WikiFile wikiFile = WikiBase.getDataHandler().lookupWikiFile(virtualWiki, topicName);
 		if (wikiFile == null) {
 			return null;
@@ -236,11 +234,9 @@ public abstract class ImageUtil {
 	 *  this parameter should be <code>null</code>.
 	 * @return The full HTML required to display an image enclosed within an
 	 *  HTML anchor tag that links to the image topic page.
-	 * @throws DataAccessException Thrown if any error occurs while retrieving image
-	 *  information.
 	 * @throws IOException Thrown if any error occurs while reading image information.
 	 */
-	public static String buildImageLinkHtml(String context, String linkVirtualWiki, String topicName, ImageMetadata imageMetadata, String style, boolean escapeHtml, WikiFileVersion fileVersion) throws DataAccessException, IOException {
+	public static String buildImageLinkHtml(String context, String linkVirtualWiki, String topicName, ImageMetadata imageMetadata, String style, boolean escapeHtml, WikiFileVersion fileVersion) throws IOException {
 		String url = ImageUtil.buildImageFileUrl(context, linkVirtualWiki, topicName, false);
 		if (url == null) {
 			return ImageUtil.buildUploadLink(context, linkVirtualWiki, topicName);
@@ -417,7 +413,7 @@ public abstract class ImageUtil {
 	/**
 	 *
 	 */
-	private static String buildUploadLink(String context, String virtualWiki, String topicName) throws DataAccessException {
+	private static String buildUploadLink(String context, String virtualWiki, String topicName) {
 		WikiLink uploadLink = new WikiLink(context, virtualWiki, "Special:Upload");
 		uploadLink.setQuery("?topic=" + Utilities.encodeAndEscapeTopicName(topicName));
 		return LinkUtil.buildInternalLinkHtml(uploadLink, topicName, "edit", null, true);
@@ -588,7 +584,7 @@ public abstract class ImageUtil {
 	 * @throws IOException Thrown if an error occurs while initializing the
 	 *  WikiImage object.
 	 */
-	private static WikiImage initializeWikiImage(WikiFile wikiFile, ImageMetadata imageMetadata, WikiFileVersion fileVersion) throws DataAccessException, IOException {
+	private static WikiImage initializeWikiImage(WikiFile wikiFile, ImageMetadata imageMetadata, WikiFileVersion fileVersion) throws IOException {
 		if (wikiFile == null) {
 			throw new IllegalArgumentException("wikiFile may not be null");
 		}
@@ -702,7 +698,7 @@ public abstract class ImageUtil {
 	 * Determine if image information is available in the cache.  If so return it,
 	 * otherwise return <code>null</code>.
 	 */
-	private static Dimension retrieveFromCache(WikiImage wikiImage) throws DataAccessException {
+	private static Dimension retrieveFromCache(WikiImage wikiImage) {
 		String key = wikiImage.getVirtualWiki() + "/" + wikiImage.getUrl();
 		return CACHE_IMAGE_DIMENSIONS.retrieveFromCache(key);
 	}
@@ -740,7 +736,7 @@ public abstract class ImageUtil {
 	 * @param ipAddress The IP address of the topic record author.
 	 * @return The Topic that is written for the image record.
 	 */
-	public static Topic writeImageTopic(String virtualWiki, String pageName, String contents, WikiUser user, boolean isImage, String ipAddress) throws DataAccessException, ParserException, WikiException {
+	public static Topic writeImageTopic(String virtualWiki, String pageName, String contents, WikiUser user, boolean isImage, String ipAddress) throws ParserException, WikiException {
 		Namespace namespace = Namespace.namespace(Namespace.FILE_ID);
 		Topic topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, namespace, pageName, false);
 		int charactersChanged = 0;
@@ -780,7 +776,7 @@ public abstract class ImageUtil {
 	 * @param fileSize The size of the file version record in bytes.
 	 * @return The new or updated WikiFile record.
 	 */
-	public static WikiFile writeWikiFile(Topic topic, WikiFileVersion wikiFileVersion, WikiUser user, String ipAddress, String filename, String url, String contentType, long fileSize, ImageData imageData) throws DataAccessException, WikiException {
+	public static WikiFile writeWikiFile(Topic topic, WikiFileVersion wikiFileVersion, WikiUser user, String ipAddress, String filename, String url, String contentType, long fileSize, ImageData imageData) throws WikiException {
 		wikiFileVersion.setAuthorDisplay(ipAddress);
 		Integer authorId = null;
 		if (user != null && user.getUserId() > 0) {

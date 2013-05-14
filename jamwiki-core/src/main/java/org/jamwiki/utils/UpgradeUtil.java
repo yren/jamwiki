@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiConfiguration;
@@ -192,9 +191,6 @@ public class UpgradeUtil {
 			} catch (WikiException e) {
 				logger.warn("Failure while updating JAMWiki stylesheet", e);
 				this.messages.add(e.getWikiMessage());
-				this.messages.add(new WikiMessage("upgrade.message.stylesheet.failure",  e.getMessage()));
-			} catch (DataAccessException e) {
-				logger.warn("Failure while updating JAMWiki stylesheet", e);
 				this.messages.add(new WikiMessage("upgrade.message.stylesheet.failure",  e.getMessage()));
 			}
 		}

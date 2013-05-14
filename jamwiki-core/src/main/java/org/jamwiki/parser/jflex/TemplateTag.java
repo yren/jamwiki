@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -94,8 +93,6 @@ public class TemplateTag implements JFlexParserTag {
 				templateName = Namespace.namespace(Namespace.TEMPLATE_ID).getLabel(lexer.getParserInput().getVirtualWiki()) + Namespace.SEPARATOR + StringUtils.capitalize(templateName);
 			}
 			return "[[" + templateName + "]]";
-		} catch (DataAccessException e) {
-			throw new ParserException("Data access exception while parsing: " + raw, e);
 		}
 	}
 
@@ -105,7 +102,7 @@ public class TemplateTag implements JFlexParserTag {
 	 * template topic page, or if allowTemplateEdit is <code>false</code> it will return
 	 * <code>null</code> (used with substitutions, where an edit link should not be shown).
 	 */
-	private String parseTemplateOutput(ParserInput parserInput, ParserOutput parserOutput, int mode, String raw, boolean allowTemplateEdit) throws DataAccessException, ParserException {
+	private String parseTemplateOutput(ParserInput parserInput, ParserOutput parserOutput, int mode, String raw, boolean allowTemplateEdit) throws ParserException {
 		String templateContent = raw.substring("{{".length(), raw.length() - "}}".length());
 		parserInput.incrementTemplateDepth();
 		if (parserInput.getTemplateDepth() > Environment.getIntValue(Environment.PROP_PARSER_MAX_TEMPLATE_DEPTH)) {
@@ -209,7 +206,7 @@ public class TemplateTag implements JFlexParserTag {
 	 * Determine if template content is of the form "subst:XXX".  If it is,
 	 * process it, otherwise return <code>null</code>.
 	 */
-	private String parseSubstitution(ParserInput parserInput, ParserOutput parserOutput, String raw, String templateContent) throws DataAccessException, ParserException {
+	private String parseSubstitution(ParserInput parserInput, ParserOutput parserOutput, String raw, String templateContent) throws ParserException {
 		// get the substitution content
 		String substContent = templateContent.trim().substring("subst:".length()).trim();
 		if (substContent.length() == 0) {
@@ -366,7 +363,7 @@ public class TemplateTag implements JFlexParserTag {
 	 * function, and if so return the appropriate parsed content.  Otherwise
 	 * return <code>null</code>.
 	 */
-	private String processParserFunctionAndMagicWord(ParserInput parserInput, ParserOutput parserOutput, int mode, String templateContent, String raw) throws DataAccessException, ParserException {
+	private String processParserFunctionAndMagicWord(ParserInput parserInput, ParserOutput parserOutput, int mode, String templateContent, String raw) throws ParserException {
 		String[] magicWordInfo = MagicWordUtil.parseMagicWordInfo(templateContent);
 		if (magicWordInfo != null) {
 			if (mode <= JFlexParser.MODE_MINIMAL) {

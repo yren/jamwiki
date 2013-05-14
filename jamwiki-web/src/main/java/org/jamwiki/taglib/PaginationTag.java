@@ -20,7 +20,6 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.BodyTagSupport;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.parser.LinkUtil;
 import org.jamwiki.parser.WikiLink;
 import org.jamwiki.utils.WikiLogger;
@@ -67,12 +66,7 @@ public class PaginationTag extends BodyTagSupport {
 		String query = LinkUtil.appendQueryParam(wikiLink.getQuery(), "num", Integer.toString(num));
 		query += "&amp;offset=0";
 		wikiLink.setQuery(query);
-		try {
-			output.append(LinkUtil.buildTopicUrl(wikiLink));
-		} catch (DataAccessException e) {
-			logger.warn("Failure while building pagination element", e);
-			return new StringBuilder();
-		}
+		output.append(LinkUtil.buildTopicUrl(wikiLink));
 		output.append("\">");
 		output.append(num);
 		output.append("</a>");
@@ -122,12 +116,7 @@ public class PaginationTag extends BodyTagSupport {
 		String query = LinkUtil.appendQueryParam(wikiLink.getQuery(), "num", Integer.toString(pagination.getNumResults()));
 		query += "&amp;offset=" + offset;
 		wikiLink.setQuery(query);
-		try {
-			output.append(LinkUtil.buildTopicUrl(wikiLink));
-		} catch (DataAccessException e) {
-			logger.warn("Failure while building pagination element", e);
-			return new StringBuilder();
-		}
+		output.append(LinkUtil.buildTopicUrl(wikiLink));
 		output.append("\">");
 		if (previous) {
 			output.append(Utilities.formatMessage("common.pagination.previous", request.getLocale(), objects));

@@ -35,7 +35,6 @@ import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jamwiki.WikiBase;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.model.ImageData;
 import org.jamwiki.utils.WikiLogger;
 import org.jamwiki.utils.WikiUtil;
@@ -96,14 +95,10 @@ public class ImageProcessor {
 	 */
 	private static ImageData loadImage(int fileId, int fileRevisionId) throws IOException {
 		ImageData imageData = null;
-		try {
-			if (fileRevisionId != -1) {
-				imageData = WikiBase.getDataHandler().getImageVersionData(fileRevisionId, 0);
-			} else {
-				imageData = WikiBase.getDataHandler().getImageData(fileId, 0);
-			}
-		} catch (DataAccessException dae) {
-			throw new IOException("Failure while retrieving image data for file " + fileId + ": " + dae.toString());
+		if (fileRevisionId != -1) {
+			imageData = WikiBase.getDataHandler().getImageVersionData(fileRevisionId, 0);
+		} else {
+			imageData = WikiBase.getDataHandler().getImageData(fileId, 0);
 		}
 		if (imageData == null) {
 			throw new FileNotFoundException("Image does not exist: " + fileId);
@@ -269,14 +264,10 @@ public class ImageProcessor {
 	 */
 	protected static Dimension retrieveImageDimensions(int fileId, int fileVersionId, int resized) throws IOException {
 		ImageData imageData = null;
-		try {
-			if (fileVersionId != -1) {
-				imageData = WikiBase.getDataHandler().getImageVersionData(fileVersionId, resized);
-			} else {
-				imageData = WikiBase.getDataHandler().getImageInfo(fileId, resized);
-			}
-		} catch (DataAccessException dae) {
-			throw new IOException("Failure while retrieving image info for file " + fileId + ": " + dae.toString());
+		if (fileVersionId != -1) {
+			imageData = WikiBase.getDataHandler().getImageVersionData(fileVersionId, resized);
+		} else {
+			imageData = WikiBase.getDataHandler().getImageInfo(fileId, resized);
 		}
 		if (imageData == null || imageData.width < 0) {
 			return null;
@@ -315,12 +306,6 @@ public class ImageProcessor {
 	 * Save an image.
 	 */
 	private static void saveImage(ImageData imageData) throws IOException {
-		try {
-			WikiBase.getDataHandler().insertImage(imageData, true);
-		} catch (DataAccessException dae) {
-			//FIXME
-			//throw new IOException(dae);
-			logger.warn(dae.toString());
-		}
+		WikiBase.getDataHandler().insertImage(imageData, true);
 	}
 }

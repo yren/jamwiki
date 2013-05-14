@@ -37,6 +37,7 @@ import org.jamwiki.model.TopicType;
 import org.jamwiki.model.TopicVersion;
 import org.jamwiki.utils.Pagination;
 import org.jamwiki.utils.WikiLogger;
+import org.springframework.jdbc.UncategorizedSQLException;
 
 /**
  * Caché-specific implementation of the QueryHandler interface.  This class implements
@@ -70,7 +71,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) throws SQLException {
+	public List<Category> getCategories(int virtualWikiId, String virtualWikiName, Pagination pagination) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_CATEGORIES,
 				pagination.getNumResults(),
@@ -94,7 +95,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) throws SQLException {
+	public List<LogItem> getLogItems(int virtualWikiId, String virtualWikiName, int logType, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		String sql = null;
 		Object[] args = null;
@@ -117,7 +118,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getRecentChanges(String virtualWiki, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				pagination.getNumResults(),
@@ -131,7 +132,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) throws SQLException {
+	public List<RecentChange> getTopicHistory(int topicId, Pagination pagination, boolean descending, boolean selectDeleted) {
 		// FIXME - sort order ignored
 		// the SQL contains the syntax "is {0} null", which needs to be formatted as a message.
 		Object[] params = {""};
@@ -151,7 +152,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) throws SQLException {
+	public List<String> getTopicsAdmin(int virtualWikiId, Pagination pagination) {
 		Object[] args = {
 				pagination.getNumResults(),
 				virtualWikiId,
@@ -164,7 +165,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByLogin(String virtualWiki, String login, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				pagination.getNumResults(),
@@ -179,7 +180,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) throws SQLException {
+	public List<RecentChange> getUserContributionsByUserDisplay(String virtualWiki, String userDisplay, Pagination pagination, boolean descending) {
 		// FIXME - sort order ignored
 		Object[] args = {
 				pagination.getNumResults(),
@@ -194,7 +195,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) throws SQLException {
+	public List<RecentChange> getWatchlist(int virtualWikiId, int userId, Pagination pagination) {
 		Object[] args = {
 				pagination.getNumResults(),
 				virtualWikiId,
@@ -208,7 +209,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public void insertTopicVersions(List<TopicVersion> topicVersions) throws SQLException {
+	public void insertTopicVersions(List<TopicVersion> topicVersions) {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
@@ -285,6 +286,8 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 			if (useBatch) {
 				stmt.executeBatch();
 			}
+		} catch (SQLException e) {
+			throw new UncategorizedSQLException("insertTopicVersions", null, e);
 		} finally {
 			DatabaseConnection.closeConnection(conn, stmt, rs);
 		}
@@ -294,7 +297,7 @@ public class CacheQueryHandler extends AnsiQueryHandler {
 	 *
 	 */
 	@Override
-	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) throws SQLException {
+	public Map<Integer, String> lookupTopicByType(int virtualWikiId, TopicType topicType1, TopicType topicType2, int namespaceStart, int namespaceEnd, Pagination pagination) {
 		List<Map<String, Object>> results = DatabaseConnection.getJdbcTemplate().queryForList(
 				STATEMENT_SELECT_TOPIC_BY_TYPE,
 				pagination.getNumResults(),

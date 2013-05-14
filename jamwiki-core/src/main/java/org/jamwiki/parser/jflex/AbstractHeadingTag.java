@@ -18,7 +18,6 @@ package org.jamwiki.parser.jflex;
 
 import java.io.IOException;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.parser.LinkUtil;
 import org.jamwiki.parser.ParserException;
 import org.jamwiki.parser.ParserInput;
@@ -54,12 +53,7 @@ public abstract class AbstractHeadingTag implements JFlexParserTag {
 		if (disallowInclusion) {
 			return "";
 		}
-		String url = "";
-		try {
-			url = LinkUtil.buildEditLinkUrl(parserInput.getContext(), parserInput.getVirtualWiki(), parserInput.getTopicName(), null, section);
-		} catch (DataAccessException e) {
-			logger.error("Failure while building link for topic " + parserInput.getVirtualWiki() + " / " + parserInput.getTopicName(), e);
-		}
+		String url = LinkUtil.buildEditLinkUrl(parserInput.getContext(), parserInput.getVirtualWiki(), parserInput.getTopicName(), null, section);
 		// arguments are edit link URL and edit label text
 		Object[] args = new Object[2];
 		args[0] = url;

@@ -167,11 +167,10 @@ public class WikiBase {
 	 * @param username The admin user's username (login).
 	 * @param encryptedPassword The admin user's encrypted password.  This value
 	 *  is only required when creating a new admin user.
-	 * @throws DataAccessException Thrown if an error occurs during re-initialization.
 	 * @throws IOException Thrown if an error occurs during re-initialization.
 	 * @throws WikiException Thrown if an error occurs during re-initialization.
 	 */
-	public static void reset(Locale locale, WikiUser user, String username, String encryptedPassword) throws DataAccessException, IOException, WikiException {
+	public static void reset(Locale locale, WikiUser user, String username, String encryptedPassword) throws IOException, WikiException {
 		WikiBase.instance = new WikiBase();
 		WikiCache.initialize();
 		WikiBase.dataHandler.setup(locale, user, username, encryptedPassword);

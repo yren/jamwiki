@@ -17,7 +17,6 @@
 package org.jamwiki.parser.jflex;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.parser.LinkUtil;
 import org.jamwiki.parser.ParserException;
 import org.jamwiki.parser.ParserInput;
@@ -67,12 +66,7 @@ public class EditSectionTag implements JFlexParserTag {
 		wikiLink.setSection(sectionName);
 		StringBuilder result = new StringBuilder();
 		result.append("<span class=\"").append(CSS_SECTION_COMMENT).append("\">");
-		try {
-			result.append(LinkUtil.buildInternalLinkHtml(wikiLink, "&rarr;", null, null, false));
-		} catch (DataAccessException e) {
-			logger.error("Failure while building section link for " + sectionName, e);
-			throw new ParserException(e);
-		}
+		result.append(LinkUtil.buildInternalLinkHtml(wikiLink, "&rarr;", null, null, false));
 		result.append(ParserUtil.parseEditComment(parserInput, sectionName));
 		result.append("</span>");
 		return result.toString();

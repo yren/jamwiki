@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiMessage;
 import org.jamwiki.model.UserBlock;
@@ -49,7 +48,7 @@ public class BlockListServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void view(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private void view(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		Pagination pagination = ServletUtil.loadPagination(request, next);
 		Map<Object, UserBlock> userBlocks = WikiBase.getDataHandler().getUserBlocks();
 		List<UserBlock> allItems = new ArrayList<UserBlock>();

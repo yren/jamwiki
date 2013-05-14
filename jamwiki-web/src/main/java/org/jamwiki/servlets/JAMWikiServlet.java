@@ -21,7 +21,6 @@ import java.util.LinkedHashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -84,7 +83,7 @@ public abstract class JAMWikiServlet extends AbstractController implements JAMWi
 	 * @param next A ModelAndView object corresponding to the page being
 	 *  constructed.
 	 */
-	private void buildLayout(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private void buildLayout(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		String virtualWikiName = pageInfo.getVirtualWikiName();
 		if (virtualWikiName == null) {
 			logger.error("No virtual wiki available for page request " + request.getRequestURI());
@@ -105,17 +104,15 @@ public abstract class JAMWikiServlet extends AbstractController implements JAMWi
 		// add cache-buster parameters for CSS & JS to ensure that browsers update
 		// cache if files change.
 		String cssRevision = "0";
-		try {
-			Topic systemCss = WikiBase.getDataHandler().lookupTopic(virtualWiki.getName(), WikiBase.SPECIAL_PAGE_SYSTEM_CSS, false);
-			if (systemCss != null) {
-				cssRevision = Integer.toString(systemCss.getCurrentVersionId());
-			}
-			cssRevision += '_';
-			Topic customCss = WikiBase.getDataHandler().lookupTopic(virtualWiki.getName(), WikiBase.SPECIAL_PAGE_CUSTOM_CSS, false);
-			if (customCss != null) {
-				cssRevision += Integer.toString(customCss.getCurrentVersionId());
-			}
-		} catch (DataAccessException e) {}
+		Topic systemCss = WikiBase.getDataHandler().lookupTopic(virtualWiki.getName(), WikiBase.SPECIAL_PAGE_SYSTEM_CSS, false);
+		if (systemCss != null) {
+			cssRevision = Integer.toString(systemCss.getCurrentVersionId());
+		}
+		cssRevision += '_';
+		Topic customCss = WikiBase.getDataHandler().lookupTopic(virtualWiki.getName(), WikiBase.SPECIAL_PAGE_CUSTOM_CSS, false);
+		if (customCss != null) {
+			cssRevision += Integer.toString(customCss.getCurrentVersionId());
+		}
 		next.addObject("cssRevision", cssRevision);
 		long jsRevision = 0;
 		try {
@@ -366,7 +363,7 @@ public abstract class JAMWikiServlet extends AbstractController implements JAMWi
 	 *  target for spambots.
 	 * @return <code>true</code> if the topic in question matches any spam pattern.
 	 */
-	protected boolean handleSpam(HttpServletRequest request, WikiPageInfo pageInfo, String topicName, String contents, String editComment) throws DataAccessException {
+	protected boolean handleSpam(HttpServletRequest request, WikiPageInfo pageInfo, String topicName, String contents, String editComment) {
 		String result = ServletUtil.checkForSpam(request, topicName, contents, editComment);
 		if (result == null) {
 			return false;

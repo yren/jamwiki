@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.pool.impl.GenericObjectPool;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiConfiguration;
@@ -156,7 +155,7 @@ public class AdminServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void links(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private void links(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		int[] resultArray = WikiDatabase.rebuildTopicMetadata();
 		pageInfo.addMessage(new WikiMessage("admin.maintenance.message.metadata", Integer.toString(resultArray[0])));
 		if (resultArray[1] != 0) {
@@ -216,13 +215,8 @@ public class AdminServlet extends JAMWikiServlet {
 	 *
 	 */
 	private void namespaces(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
-		try {
-			int numUpdated = WikiDatabase.fixIncorrectTopicNamespaces();
-			pageInfo.addMessage(new WikiMessage("admin.maintenance.message.topicsUpdated", Integer.toString(numUpdated)));
-		} catch (DataAccessException e) {
-			logger.error("Failure while fixing incorrect topic namespaces", e);
-			pageInfo.addError(new WikiMessage("admin.maintenance.error.namespacefail", e.getMessage()));
-		}
+		int numUpdated = WikiDatabase.fixIncorrectTopicNamespaces();
+		pageInfo.addMessage(new WikiMessage("admin.maintenance.message.topicsUpdated", Integer.toString(numUpdated)));
 		viewAdminSystem(request, next, pageInfo);
 	}
 
@@ -457,17 +451,12 @@ public class AdminServlet extends JAMWikiServlet {
 	 * when preferences should actually be processed and saved.
 	 */
 	private static void saveUserPreferenceDefaults(HttpServletRequest request, WikiPageInfo pageInfo) {
-		try {
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_DEFAULT_LOCALE, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 1);
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_TIMEZONE, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 2);
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_DATE_FORMAT, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 3);
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_TIME_FORMAT, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 4);
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_PREFERRED_EDITOR, WikiUser.USER_PREFERENCES_GROUP_EDITING, 1);
-			setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_SIGNATURE, WikiUser.USER_PREFERENCES_GROUP_EDITING, 2);
-		} catch (DataAccessException e) {
-			logger.error("Failure while updating default user preferences", e);
-			pageInfo.addError(new WikiMessage("error.unknown", e.getMessage()));
-		}
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_DEFAULT_LOCALE, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 1);
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_TIMEZONE, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 2);
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_DATE_FORMAT, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 3);
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_TIME_FORMAT, WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 4);
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_PREFERRED_EDITOR, WikiUser.USER_PREFERENCES_GROUP_EDITING, 1);
+		setUserPreferenceDefault(request, WikiUser.USER_PREFERENCE_SIGNATURE, WikiUser.USER_PREFERENCES_GROUP_EDITING, 2);
 	}
 
 	/**
@@ -532,7 +521,7 @@ public class AdminServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private static void setUserPreferenceDefault(HttpServletRequest request, String parameter, String group, int sequence) throws DataAccessException {
+	private static void setUserPreferenceDefault(HttpServletRequest request, String parameter, String group, int sequence) {
 		String value = request.getParameter(parameter);
 		if (!StringUtils.isBlank(value)) {
 			WikiBase.getDataHandler().writeUserPreferenceDefault(parameter, value, group, sequence);
@@ -589,13 +578,8 @@ public class AdminServlet extends JAMWikiServlet {
 		long maximumFileSize = Long.valueOf(props.getProperty(Environment.PROP_FILE_MAX_FILE_SIZE))/1000;
 		next.addObject("maximumFileSize", maximumFileSize);
 		next.addObject("props", props);
-		try {
-			List<VirtualWiki> virtualWikiList = WikiBase.getDataHandler().getVirtualWikiList();
-			next.addObject("virtualwikis", virtualWikiList);
-		} catch (DataAccessException e) {
-			logger.error("Failure while retrieving database records", e);
-			pageInfo.addError(new WikiMessage("error.unknown", e.getMessage()));
-		}
+		List<VirtualWiki> virtualWikiList = WikiBase.getDataHandler().getVirtualWikiList();
+		next.addObject("virtualwikis", virtualWikiList);
 	}
 
 	/**

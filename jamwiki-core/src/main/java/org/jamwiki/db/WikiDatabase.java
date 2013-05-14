@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiConfiguration;
@@ -249,30 +248,26 @@ public class WikiDatabase {
 	 * and is also available for use to resolve data issues after creating or updating
 	 * namespace names.
 	 */
-	public static int fixIncorrectTopicNamespaces() throws DataAccessException {
+	public static int fixIncorrectTopicNamespaces() {
 		int count = 0;
 		Map<Integer, String> topicNames;
 		List<Topic> topics;
 		WikiLink wikiLink;
 		List<VirtualWiki> virtualWikis = WikiBase.getDataHandler().getVirtualWikiList();
-		try {
-			for (VirtualWiki virtualWiki : virtualWikis) {
-				topicNames = WikiBase.getDataHandler().queryHandler().lookupTopicNames(virtualWiki.getVirtualWikiId(), true);
-				if (topicNames.isEmpty()) {
-					continue;
-				}
-				topics = new ArrayList<Topic>();
-				for (Map.Entry<Integer, String> entry : topicNames.entrySet()) {
-					wikiLink = new WikiLink(null, virtualWiki.getName(), entry.getValue());
-					Topic topic = new Topic(virtualWiki.getName(), wikiLink.getNamespace(), wikiLink.getArticle());
-					topic.setTopicId(entry.getKey());
-					topics.add(topic);
-				}
-				WikiBase.getDataHandler().queryHandler().updateTopicNamespaces(topics);
-				count += topicNames.size();
+		for (VirtualWiki virtualWiki : virtualWikis) {
+			topicNames = WikiBase.getDataHandler().queryHandler().lookupTopicNames(virtualWiki.getVirtualWikiId(), true);
+			if (topicNames.isEmpty()) {
+				continue;
 			}
-		} catch (SQLException e) {
-			throw new DataAccessException(e);
+			topics = new ArrayList<Topic>();
+			for (Map.Entry<Integer, String> entry : topicNames.entrySet()) {
+				wikiLink = new WikiLink(null, virtualWiki.getName(), entry.getValue());
+				Topic topic = new Topic(virtualWiki.getName(), wikiLink.getNamespace(), wikiLink.getArticle());
+				topic.setTopicId(entry.getKey());
+				topics.add(topic);
+			}
+			WikiBase.getDataHandler().queryHandler().updateTopicNamespaces(topics);
+			count += topicNames.size();
 		}
 		return count;
 	}
@@ -285,7 +280,7 @@ public class WikiDatabase {
 	 * @param props Properties object containing the new database properties
 	 * @param errors List to add error messages to
 	 */
-	public static void migrateDatabase(Properties props, List<WikiMessage> errors) throws DataAccessException {
+	public static void migrateDatabase(Properties props, List<WikiMessage> errors) {
 		// verify that new database is different from the old database
 		if (StringUtils.equalsIgnoreCase(Environment.getValue(Environment.PROP_DB_URL), props.getProperty(Environment.PROP_DB_URL))) {
 			errors.add(new WikiMessage("error.databaseconnection", "Cannot migrate to the same database"));
@@ -530,7 +525,7 @@ public class WikiDatabase {
 	 * when totally re-initializing a system.  To reiterate: CALLING THIS METHOD WILL
 	 * DELETE ALL WIKI DATA!
 	 */
-	protected static void purgeData(Connection conn) throws DataAccessException {
+	protected static void purgeData(Connection conn) {
 		// BOOM!  Everything gone...
 		WikiDatabase.dropTables(WikiBase.getDataHandler().queryHandler(), conn);
 		try {
@@ -597,7 +592,7 @@ public class WikiDatabase {
 	 * @return An array of two numerical values, the first one is the number of records
 	 *  updated successfully, the second is the number of records that failed.
 	 */
-	public static int[] rebuildTopicMetadata() throws DataAccessException {
+	public static int[] rebuildTopicMetadata() {
 		int numErrors = 0;
 		int numUpdated = 0;
 		List<String> topicNames;
@@ -621,9 +616,6 @@ public class WikiDatabase {
 					WikiBase.getDataHandler().writeTopic(topic, null, parserOutput.getCategories(), parserOutput.getLinks());
 					numUpdated++;
 				} catch (ParserException e) {
-					logger.error("Failure while regenerating topic metadata for " + virtualWiki.getName() + " / " + topicName + ": " + e.getMessage());
-					numErrors++;
-				} catch (DataAccessException e) {
 					logger.error("Failure while regenerating topic metadata for " + virtualWiki.getName() + " / " + topicName + ": " + e.getMessage());
 					numErrors++;
 				} catch (WikiException e) {
@@ -688,7 +680,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	protected static void setup(final Locale locale, final WikiUser user, final String username, final String encryptedPassword) throws DataAccessException, WikiException {
+	protected static void setup(final Locale locale, final WikiUser user, final String username, final String encryptedPassword) throws WikiException {
 		try {
 			DatabaseConnection.getTransactionTemplate().execute(
 				new TransactionCallbackWithoutResult() {
@@ -706,12 +698,12 @@ public class WikiDatabase {
 							WikiDatabase.setupUserPreferencesDefaults();
 							WikiDatabase.setupAdminUser(user, username, encryptedPassword);
 							WikiDatabase.setupSpecialPages(locale, user);
-						} catch (SQLException e) {
+						} catch (IOException e) {
 							status.setRollbackOnly();
 							logger.error("Unable to set up database tables", e);
 							rollbackAfterSetupFailure();
 							throw new TransactionRuntimeException(e);
-						} catch (DataAccessException e) {
+						} catch (SQLException e) {
 							status.setRollbackOnly();
 							logger.error("Unable to set up database tables", e);
 							rollbackAfterSetupFailure();
@@ -752,7 +744,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	private static void setupAdminUser(WikiUser user, String username, String encryptedPassword) throws DataAccessException, WikiException {
+	private static void setupAdminUser(WikiUser user, String username, String encryptedPassword) throws WikiException {
 		logger.info("Creating wiki admin user");
 		if (user == null) {
 			throw new IllegalArgumentException("Cannot pass null or anonymous WikiUser object to setupAdminUser");
@@ -788,8 +780,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	// FIXME - make this private once the ability to upgrade to 1.0.0 is removed
-	protected static void setupDefaultInterwikis() throws DataAccessException, WikiException {
+	private static void setupDefaultInterwikis() throws WikiException {
 		logger.info("Creating default interwiki records");
 		Interwiki jamwiki = new Interwiki("jamwikiorg", "http://jamwiki.org/wiki/en/{0}", "JAMWiki");
 		WikiBase.getDataHandler().writeInterwiki(jamwiki);
@@ -812,7 +803,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	private static void setupDefaultNamespaces() throws DataAccessException, WikiException {
+	private static void setupDefaultNamespaces() throws WikiException {
 		logger.info("Creating default wiki namespaces");
 		Namespace[] defaultNamespaces = Namespace.retrieveDefaultNamespacesForSetup();
 		// namespaces are ordered with main first, then comments, so loop through and get each
@@ -833,7 +824,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	private static void setupDefaultVirtualWiki() throws DataAccessException, WikiException {
+	private static void setupDefaultVirtualWiki() throws WikiException {
 		logger.info("Creating default virtual wiki");
 		VirtualWiki virtualWiki = VirtualWiki.defaultVirtualWiki();
 		WikiBase.getDataHandler().writeVirtualWiki(virtualWiki);
@@ -842,7 +833,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	protected static void setupGroups() throws DataAccessException, WikiException {
+	protected static void setupGroups() throws WikiException {
 		logger.info("Creating default wiki groups");
 		WikiGroup group = new WikiGroup(WikiGroup.GROUP_ANONYMOUS);
 		// FIXME - use message key
@@ -871,7 +862,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	protected static void setupRoles() throws DataAccessException, WikiException {
+	protected static void setupRoles() throws WikiException {
 		logger.info("Creating default wiki roles");
 		Role role = Role.ROLE_ADMIN;
 		// FIXME - use message key
@@ -918,17 +909,12 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	protected static void setupSpecialPage(Locale locale, String virtualWiki, String topicName, WikiUser user, boolean adminOnly, boolean readOnly) throws DataAccessException, WikiException {
+	protected static void setupSpecialPage(Locale locale, String virtualWiki, String topicName, WikiUser user, boolean adminOnly, boolean readOnly) throws IOException, WikiException {
 		logger.info("Setting up special page " + virtualWiki + " / " + topicName);
 		if (user == null) {
 			throw new IllegalArgumentException("Cannot pass null WikiUser object to setupSpecialPage");
 		}
-		String contents = null;
-		try {
-			contents = WikiDatabase.readSpecialPage(locale, topicName);
-		} catch (IOException e) {
-			throw new DataAccessException(e);
-		}
+		String contents = WikiDatabase.readSpecialPage(locale, topicName);
 		WikiLink wikiLink = new WikiLink(null, virtualWiki, topicName);
 		Topic topic = new Topic(virtualWiki, wikiLink.getNamespace(), wikiLink.getArticle());
 		topic.setTopicContent(contents);
@@ -946,7 +932,7 @@ public class WikiDatabase {
 	/**
 	 *
 	 */
-	private static void setupSpecialPages(Locale locale, WikiUser user) throws DataAccessException, WikiException {
+	private static void setupSpecialPages(Locale locale, WikiUser user) throws IOException, WikiException {
 		List<VirtualWiki> all = WikiBase.getDataHandler().getVirtualWikiList();
 		for (VirtualWiki virtualWiki : all) {
 			// create the default topics
@@ -963,7 +949,7 @@ public class WikiDatabase {
 	 *
 	 */
 	// TODO - make this method private once the ability to upgrade to 1.3.0 has been removed.
-	protected static void setupUserPreferencesDefaults() throws DataAccessException, WikiException {
+	protected static void setupUserPreferencesDefaults() throws WikiException {
 		WikiBase.getDataHandler().writeUserPreferenceDefault(WikiUser.USER_PREFERENCE_DEFAULT_LOCALE, Locale.getDefault().toString(), WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 1);
 		WikiBase.getDataHandler().writeUserPreferenceDefault(WikiUser.USER_PREFERENCE_TIMEZONE, TimeZone.getDefault().getID(), WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 2);
 		WikiBase.getDataHandler().writeUserPreferenceDefault(WikiUser.USER_PREFERENCE_DATE_FORMAT, WikiConfiguration.getInstance().getDateFormats().get(0), WikiUser.USER_PREFERENCES_GROUP_INTERNATIONALIZATION, 3);

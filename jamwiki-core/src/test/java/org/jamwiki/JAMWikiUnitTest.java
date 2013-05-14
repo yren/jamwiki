@@ -95,7 +95,7 @@ public abstract class JAMWikiUnitTest {
 	/**
 	 * Read and load a test topic from the file system.
 	 */
-	protected Topic setupTopic(VirtualWiki virtualWiki, String fileName) throws DataAccessException, IOException, WikiException {
+	protected Topic setupTopic(VirtualWiki virtualWiki, String fileName) throws IOException, WikiException {
 		String contents = TestFileUtil.retrieveFileContent(TestFileUtil.TEST_TOPICS_DIR, fileName);
 		String topicName = TestFileUtil.decodeTopicName(fileName);
 		return this.setupTopic(virtualWiki, topicName, contents);
@@ -104,7 +104,7 @@ public abstract class JAMWikiUnitTest {
 	/**
 	 * Crate a test topic.
 	 */
-	protected Topic setupTopic(VirtualWiki virtualWiki, String topicName, String contents) throws DataAccessException, IOException, WikiException {
+	protected Topic setupTopic(VirtualWiki virtualWiki, String topicName, String contents) throws IOException, WikiException {
 		if (virtualWiki == null) {
 			virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki("en");
 		}
@@ -122,7 +122,7 @@ public abstract class JAMWikiUnitTest {
 	/**
 	 * Crate a test topic.  Cannot be used for images.
 	 */
-	protected void setupTopic(Topic topic) throws DataAccessException, WikiException {
+	protected void setupTopic(Topic topic) throws WikiException {
 		TopicVersion topicVersion = new TopicVersion(null, "127.0.0.1", null, topic.getTopicContent(), topic.getTopicContent().length());
 		WikiBase.getDataHandler().writeTopic(topic, topicVersion, null, null);
 	}
@@ -131,7 +131,7 @@ public abstract class JAMWikiUnitTest {
 	 * Read and load default topics from the /jamwiki-core/src/test/resources/data/topics
 	 * folder.
 	 */
-	private void setupTopics() throws DataAccessException, IOException, WikiException {
+	private void setupTopics() throws IOException, WikiException {
 		File topicDir = TestFileUtil.getClassLoaderFile(TestFileUtil.TEST_TOPICS_DIR);
 		File[] topicFiles = topicDir.listFiles();
 		List<VirtualWiki> virtualWikis = WikiBase.getDataHandler().getVirtualWikiList();
@@ -149,7 +149,7 @@ public abstract class JAMWikiUnitTest {
 	 * Set up images separately - one image is created in both virtual wikis, the
 	 * second image is set up in only the shared virtual wiki.
 	 */
-	private void setupImage(VirtualWiki virtualWiki, Topic topic) throws DataAccessException, IOException, WikiException {
+	private void setupImage(VirtualWiki virtualWiki, Topic topic) throws IOException, WikiException {
 		if (!topic.getName().toLowerCase().startsWith("file:")) {
 			throw new IllegalArgumentException("Cannot call JAMWikiUtilTest.setupImage for non-image topics");
 		}

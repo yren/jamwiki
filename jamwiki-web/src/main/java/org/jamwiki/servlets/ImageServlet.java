@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.apache.commons.io.IOUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.model.ImageData;
@@ -104,14 +103,10 @@ public class ImageServlet extends JAMWikiServlet {
 		int fileVersionId = Integer.parseInt(args[2].toString());
 		int resized = Integer.parseInt(args[3].toString());
 		ImageData imageData;
-		try {
-			if (fileVersionId != 0) {
-				imageData = WikiBase.getDataHandler().getImageVersionData(fileVersionId, resized);
-			} else {
-				imageData = WikiBase.getDataHandler().getImageData(fileId, resized);
-			}
-		} catch (DataAccessException dae) {
-			throw new ServletException(dae);
+		if (fileVersionId != 0) {
+			imageData = WikiBase.getDataHandler().getImageVersionData(fileVersionId, resized);
+		} else {
+			imageData = WikiBase.getDataHandler().getImageData(fileId, resized);
 		}
 		if (imageData == null) {
 			logger.debug("Database file does not exist: fileId=" + fileId + " / fileVersionId=" + fileVersionId + " / resized=" + resized + " / request=" + request.getRequestURI());

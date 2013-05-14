@@ -31,7 +31,6 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiException;
@@ -88,7 +87,7 @@ public class ServletUtil {
 	 * Populate the virtualWikiLinks field of the pageInfo object for Special:
 	 * pages.
 	 */
-	protected static void buildVirtualWikiLinks(HttpServletRequest request, WikiPageInfo pageInfo) throws DataAccessException {
+	protected static void buildVirtualWikiLinks(HttpServletRequest request, WikiPageInfo pageInfo) {
 		String topicName = WikiUtil.getTopicFromURI(request);
 		WikiLink wikiLink = new WikiLink(request.getContextPath(), pageInfo.getVirtualWikiName(), topicName);
 		List<String> virtualWikiLinks = new ArrayList<String>();
@@ -124,7 +123,7 @@ public class ServletUtil {
 	 * @return The parsed or unparsed (depending on the <code>cook</code>
 	 *  parameter) topic content.
 	 */
-	protected static String cachedContent(String context, Locale locale, String virtualWiki, String topicName, boolean cook) throws DataAccessException {
+	protected static String cachedContent(String context, Locale locale, String virtualWiki, String topicName, boolean cook) {
 		String cacheKey = virtualWiki + '/' + topicName;
 		String content = WikiBase.CACHE_PARSED_TOPIC_CONTENT.retrieveFromCache(cacheKey);
 		if (content != null || WikiBase.CACHE_PARSED_TOPIC_CONTENT.isKeyInCache(cacheKey)) {
@@ -166,7 +165,7 @@ public class ServletUtil {
 	 * @return <code>null</code> if nothing in the topic content matches a current
 	 *  spam pattern, or the text that matches a spam pattern if one is found.
 	 */
-	protected static String checkForSpam(HttpServletRequest request, String identifier, String... args) throws DataAccessException {
+	protected static String checkForSpam(HttpServletRequest request, String identifier, String... args) {
 		// check the blacklist
 		String result = null;
 		String message = null;
@@ -242,13 +241,8 @@ public class ServletUtil {
 			return user;
 		}
 		if (!WikiUtil.isFirstUse() && !WikiUtil.isUpgrade()) {
-			try {
-				// FIXME - do not lookup the user every time this method is called, that will kill performance
-				user = WikiBase.getDataHandler().lookupWikiUser(username);
-			} catch (DataAccessException e) {
-				logger.error("Failure while retrieving user from database with login: " + username, e);
-				return user;
-			}
+			// FIXME - do not lookup the user every time this method is called, that will kill performance
+			user = WikiBase.getDataHandler().lookupWikiUser(username);
 			if (user == null) {
 				// invalid user.  someone has either spoofed a cookie or the user account is no longer in
 				// the database.
@@ -285,11 +279,7 @@ public class ServletUtil {
 			return watchlist;
 		}
 		WikiUser user = ServletUtil.currentWikiUser();
-		try {
-			watchlist = WikiBase.getDataHandler().getWatchlist(virtualWiki, user.getUserId());
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		watchlist = WikiBase.getDataHandler().getWatchlist(virtualWiki, user.getUserId());
 		if (request.getSession(false) != null) {
 			// add watchlist to session
 			request.getSession(false).setAttribute(WikiUtil.PARAMETER_WATCHLIST, watchlist);
@@ -341,12 +331,7 @@ public class ServletUtil {
 	protected static Topic initializeTopic(String virtualWiki, String topicName) throws WikiException {
 		LinkUtil.validateTopicName(virtualWiki, topicName, false);
 		WikiLink wikiLink = new WikiLink(null, virtualWiki, topicName);
-		Topic topic = null;
-		try {
-			topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, wikiLink.getNamespace(), wikiLink.getArticle(), false);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		Topic topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, wikiLink.getNamespace(), wikiLink.getArticle(), false);
 		if (topic != null) {
 			return topic;
 		}
@@ -371,16 +356,11 @@ public class ServletUtil {
 			// user does not have appropriate permissions
 			return false;
 		}
-		Topic topic = null;
-		try {
-			if (!user.hasRole(Role.ROLE_EDIT_NEW) && WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false) == null) {
-				// user does not have appropriate permissions
-				return false;
-			}
-			topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
+		if (!user.hasRole(Role.ROLE_EDIT_NEW) && WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false) == null) {
+			// user does not have appropriate permissions
+			return false;
 		}
+		Topic topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
 		if (topic == null) {
 			// new topic, edit away...
 			return true;
@@ -410,12 +390,7 @@ public class ServletUtil {
 			// no permission granted to move pages
 			return false;
 		}
-		Topic topic = null;
-		try {
-			topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		Topic topic = WikiBase.getDataHandler().lookupTopic(virtualWiki, topicName, false);
 		if (topic == null) {
 			// cannot move a topic that doesn't exist
 			return false;
@@ -465,12 +440,7 @@ public class ServletUtil {
 	protected static void loadCategoryContent(HttpServletRequest request, ModelAndView next, String virtualWiki, String topicName) throws WikiException {
 		String categoryName = topicName.substring(Namespace.namespace(Namespace.CATEGORY_ID).getLabel(virtualWiki).length() + Namespace.SEPARATOR.length());
 		next.addObject("categoryName", categoryName);
-		List<Category> categoryTopics = null;
-		try {
-			categoryTopics = WikiBase.getDataHandler().lookupCategoryTopics(virtualWiki, topicName);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		List<Category> categoryTopics = WikiBase.getDataHandler().lookupCategoryTopics(virtualWiki, topicName);
 		Pagination pagination = ServletUtil.loadPagination(request, next);
 		List<Category> categoryImages = new ArrayList<Category>();
 		LinkedHashMap<String, String> subCategories = new LinkedHashMap<String, String>();
@@ -513,10 +483,8 @@ public class ServletUtil {
 	 * @param locale The user's current locale, used to format a message key
 	 *  for the default namespace.
 	 * @return A map of namespace ID - display value for use on the front end.
-	 * @throws DataAccessException Thrown if an error occurs while retrieving
-	 *  namespace data.
 	 */
-	protected static Map<Integer, String> loadNamespaceDisplayMap(String virtualWiki, Locale locale) throws DataAccessException {
+	protected static Map<Integer, String> loadNamespaceDisplayMap(String virtualWiki, Locale locale) {
 		List<Namespace> namespaces = WikiBase.getDataHandler().lookupNamespaces();
 		Map<Integer, String> namespaceMap = new TreeMap<Integer, String>();
 		for (Namespace namespace : namespaces) {
@@ -590,14 +558,9 @@ public class ServletUtil {
 	 * @throws WikiException Thrown if any error occurs while processing.
 	 */
 	protected static void redirect(ModelAndView next, String virtualWiki, String destination) throws WikiException {
-		String target = null;
 		// set null context path since this is a redirect within the servlet context
 		WikiLink wikiLink = LinkUtil.parseWikiLink(null, virtualWiki, destination);
-		try {
-			target = LinkUtil.buildTopicUrl(wikiLink);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		String target = LinkUtil.buildTopicUrl(wikiLink);
 		String view = ServletUtil.SPRING_REDIRECT_PREFIX + target;
 		next.clear();
 		next.setViewName(view);
@@ -674,9 +637,7 @@ public class ServletUtil {
 		// change being made late in a release cycle.  Revisit in a future
 		// release & clean this up.
 		if (Environment.isInitialized()) {
-			try {
-				virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(virtualWikiName);
-			} catch (DataAccessException e) {}
+			virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(virtualWikiName);
 		}
 		if (virtualWiki == null) {
 			logger.error("No virtual wiki found for " + virtualWikiName);
@@ -820,23 +781,13 @@ public class ServletUtil {
 	 * If a topic is an image then set metadata appropriately.
 	 */
 	private static void viewTopicImage(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo, Topic topic) throws WikiException {
-		WikiFile wikiFile = null;
-		List<WikiFileVersion> fileVersions = null;
-		try {
-			wikiFile = WikiBase.getDataHandler().lookupWikiFile(topic.getVirtualWiki(), topic.getName());
-			fileVersions = WikiBase.getDataHandler().getAllWikiFileVersions(topic.getVirtualWiki(), topic.getName(), true);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		WikiFile wikiFile = WikiBase.getDataHandler().lookupWikiFile(topic.getVirtualWiki(), topic.getName());
+		List<WikiFileVersion> fileVersions = WikiBase.getDataHandler().getAllWikiFileVersions(topic.getVirtualWiki(), topic.getName(), true);
 		WikiUser wikiUser;
 		for (WikiFileVersion fileVersion : fileVersions) {
 			// make sure the authorDisplay field is equal to the login for non-anonymous uploads
 			if (fileVersion.getAuthorId() != null) {
-				try {
-					wikiUser = WikiBase.getDataHandler().lookupWikiUser(fileVersion.getAuthorId());
-				} catch (DataAccessException e) {
-					throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-				}
+				wikiUser = WikiBase.getDataHandler().lookupWikiUser(fileVersion.getAuthorId());
 				if (wikiUser != null) {
 					// wikiUser should never be null unless the data in the database is somehow corrupt
 					fileVersion.setAuthorDisplay(wikiUser.getUsername());
@@ -855,18 +806,14 @@ public class ServletUtil {
 		// shared virtual wiki.
 		boolean sharedImage = !pageInfo.getVirtualWikiName().equals(wikiFile.getVirtualWiki());
 		if (sharedImage) {
-			try {
-				Topic sharedImageTopic = topic;
-				if (!StringUtils.equals(wikiFile.getVirtualWiki(), topic.getVirtualWiki())) {
-					// look up the shared topic file
-					sharedImageTopic = WikiBase.getDataHandler().lookupTopicById(wikiFile.getTopicId());
-				}
-				WikiLink wikiLink = new WikiLink(request.getContextPath(), sharedImageTopic.getVirtualWiki(), sharedImageTopic.getName());
-				pageInfo.setCanonicalUrl(wikiLink.toRelativeUrl());
-				next.addObject("sharedImageTopicObject", sharedImageTopic);
-			} catch (DataAccessException e) {
-				throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
+			Topic sharedImageTopic = topic;
+			if (!StringUtils.equals(wikiFile.getVirtualWiki(), topic.getVirtualWiki())) {
+				// look up the shared topic file
+				sharedImageTopic = WikiBase.getDataHandler().lookupTopicById(wikiFile.getTopicId());
 			}
+			WikiLink wikiLink = new WikiLink(request.getContextPath(), sharedImageTopic.getVirtualWiki(), sharedImageTopic.getName());
+			pageInfo.setCanonicalUrl(wikiLink.toRelativeUrl());
+			next.addObject("sharedImageTopicObject", sharedImageTopic);
 		}
 	}
 
@@ -875,20 +822,10 @@ public class ServletUtil {
 	 * the topic that is the target of the redirection.
 	 */
 	private static Topic viewTopicRedirect(HttpServletRequest request, WikiPageInfo pageInfo, WikiMessage pageTitle, Topic topic) throws WikiException {
-		Topic child = null;
-		try {
-			child = LinkUtil.findRedirectedTopic(topic, 0);
-		} catch (DataAccessException e) {
-			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-		}
+		Topic child = LinkUtil.findRedirectedTopic(topic, 0);
 		if (!child.getName().equals(topic.getName())) {
-			String redirectUrl = null;
 			WikiLink wikiLink = new WikiLink(request.getContextPath(), topic.getVirtualWiki(), topic.getName());
-			try {
-				redirectUrl = LinkUtil.buildTopicUrl(wikiLink);
-			} catch (DataAccessException e) {
-				throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
-			}
+			String redirectUrl = LinkUtil.buildTopicUrl(wikiLink);
 			// FIXME - hard coding
 			redirectUrl += LinkUtil.appendQueryParam("", "redirect", "no");
 			String redirectName = topic.getName();

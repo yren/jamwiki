@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiMessage;
 import org.jamwiki.model.Namespace;
@@ -158,7 +157,7 @@ public class ItemsServlet extends JAMWikiServlet {
 	/**
 	 *
 	 */
-	private void viewTopics(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) throws DataAccessException {
+	private void viewTopics(HttpServletRequest request, ModelAndView next, WikiPageInfo pageInfo) {
 		String virtualWiki = pageInfo.getVirtualWikiName();
 		Pagination pagination = ServletUtil.loadPagination(request, next);
 		// find the current namespace and topic type

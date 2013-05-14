@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.WikiBase;
 import org.jamwiki.WikiVersion;
@@ -69,8 +68,6 @@ public class MediaWikiXmlExporter implements TopicExporter {
 			this.writePages(bufferedWriter, virtualWiki, topicNames, excludeHistory);
 			bufferedWriter.append("\n</mediawiki>");
 			success = true;
-		} catch (DataAccessException e) {
-			throw new MigrationException(e);
 		} catch (IOException e) {
 			throw new MigrationException(e);
 		} finally {
@@ -85,10 +82,8 @@ public class MediaWikiXmlExporter implements TopicExporter {
 
 	/**
 	 * Return the URL of the index page for the wiki.
-	 *
-	 * @throws DataAccessException Thrown if any error occurs while retrieving data.
 	 */
-	private String retrieveBaseUrl() throws DataAccessException {
+	private String retrieveBaseUrl() {
 		VirtualWiki virtualWiki = VirtualWiki.defaultVirtualWiki();
 		String url = Environment.getValue(Environment.PROP_SERVER_URL);
 		WikiLink wikiLink = new WikiLink(WikiUtil.WEBAPP_CONTEXT_PATH, virtualWiki.getName(), virtualWiki.getRootTopicName());
@@ -99,7 +94,7 @@ public class MediaWikiXmlExporter implements TopicExporter {
 	/**
 	 *
 	 */
-	private void writeSiteInfo(Writer writer, String virtualWikiName) throws DataAccessException, IOException {
+	private void writeSiteInfo(Writer writer, String virtualWikiName) throws IOException {
 		VirtualWiki virtualWiki = WikiBase.getDataHandler().lookupVirtualWiki(virtualWikiName);
 		writer.append("\n<siteinfo>");
 		String sitename = virtualWiki.getSiteName();
@@ -136,7 +131,7 @@ public class MediaWikiXmlExporter implements TopicExporter {
 	/**
 	 *
 	 */
-	private void writePages(Writer writer, String virtualWiki, List<String> topicNames, boolean excludeHistory) throws DataAccessException, IOException, MigrationException {
+	private void writePages(Writer writer, String virtualWiki, List<String> topicNames, boolean excludeHistory) throws IOException, MigrationException {
 		// note that effort is being made to re-use temporary objects as this
 		// code can generate an OOM "GC overhead limit exceeded" with HUGE (500MB) topics
 		// since the garbage collector ends up being invoked excessively.

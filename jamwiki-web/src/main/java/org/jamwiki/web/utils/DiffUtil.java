@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.incava.util.diff.Diff;
 import org.incava.util.diff.Difference;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.utils.WikiCache;
 import org.jamwiki.utils.WikiLogger;
 import org.jamwiki.web.model.WikiDiff;
@@ -113,7 +112,7 @@ public class DiffUtil {
 	 *  version of a topic.
 	 * @return Returns a list of WikiDiff objects that correspond to the changed text.
 	 */
-	public static List<WikiDiff> diff(String newVersion, String oldVersion) throws DataAccessException {
+	public static List<WikiDiff> diff(String newVersion, String oldVersion) {
 		List<WikiDiff> result = DiffUtil.retrieveFromCache(newVersion, oldVersion);
 		if (result != null) {
 			return result;
@@ -396,7 +395,7 @@ public class DiffUtil {
 	 * Determine if diff information is available in the cache.  If so return it,
 	 * otherwise return <code>null</code>.
 	 */
-	private static List<WikiDiff> retrieveFromCache(String newVersion, String oldVersion) throws DataAccessException {
+	private static List<WikiDiff> retrieveFromCache(String newVersion, String oldVersion) {
 		String key = generateCacheKey(newVersion, oldVersion);
 		return CACHE_DIFF_INFORMATION.retrieveFromCache(key);
 	}

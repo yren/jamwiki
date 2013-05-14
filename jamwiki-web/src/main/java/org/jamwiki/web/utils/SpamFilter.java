@@ -17,16 +17,16 @@
 package org.jamwiki.web.utils;
 
 import java.io.File;
-import java.util.regex.PatternSyntaxException;
 import java.io.IOException;
+import java.util.regex.PatternSyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jamwiki.DataAccessException;
 import org.jamwiki.Environment;
 import org.jamwiki.utils.ResourceUtil;
 import org.jamwiki.utils.WikiLogger;
+import org.springframework.dao.NonTransientDataAccessResourceException;
 
 /**
  * Provide the capability for filtering content based on a predefined list of
@@ -57,10 +57,8 @@ public class SpamFilter {
 	 *  those found in the spam blacklist.
 	 * @return If any matches are found this method returns the matched text,
 	 *  otherwise <code>null</code> is returned.
-	 * @throws DataAccessException Thrown if any error occurs while reading, compiling,
-	 *  or matching against the spam filter regular expressions.
 	 */
-	public static String containsSpam(String content) throws DataAccessException {
+	public static String containsSpam(String content) {
 		if (!Environment.getBooleanValue(Environment.PROP_TOPIC_SPAM_FILTER)) {
 			return null;
 		}
@@ -83,19 +81,19 @@ public class SpamFilter {
 	/**
 	 *
 	 */
-	private static void initialize() throws DataAccessException {
+	private static void initialize() {
 		File file = null;
 		try {
 			file = ResourceUtil.getJAMWikiResourceFile(SPAM_BLACKLIST_FILE);
 		} catch (IOException e) {
-			throw new DataAccessException("I/O exception while initlaizing spam blacklist", e);
+			throw new NonTransientDataAccessResourceException("I/O exception while initlaizing spam blacklist", e);
 		}
 		String regex = "";
 		String regexText = null;
 		try {
 			regexText = FileUtils.readFileToString(file, "UTF-8").trim();
 		} catch (IOException e) {
-			throw new DataAccessException("I/O exception while initlaizing spam blacklist", e);
+			throw new NonTransientDataAccessResourceException("I/O exception while initlaizing spam blacklist", e);
 		}
 		String[] tokens = regexText.split("\n");
 		for (int i = 0; i < tokens.length; i++) {
@@ -111,7 +109,7 @@ public class SpamFilter {
 		try {
 			spamRegexPattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
 		} catch (PatternSyntaxException e) {
-			throw new DataAccessException("Failure while parsing spam regular expression list", e);
+			throw new NonTransientDataAccessResourceException("Failure while parsing spam regular expression list", e);
 		}
 		logger.info("Loading spam filter regular expressions from " + file.getAbsolutePath());
 	}
@@ -119,11 +117,8 @@ public class SpamFilter {
 	/**
 	 * Reload the spam-blacklist.txt file, updating the current spam regular
 	 * expression patterns.
-	 *
-	 * @throws DataAccessException Thrown if any error occurs while reading or compiling
-	 *  the spam filter regular expressions.
 	 */
-	public static void reload() throws DataAccessException {
+	public static void reload() {
 		SpamFilter.initialize();
 	}
 }
