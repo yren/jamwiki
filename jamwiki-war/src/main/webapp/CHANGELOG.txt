@@ -7,9 +7,11 @@ New Features:
   * Remove deprecated TiddlyWiki importer.
   * Remove the ability to automatically upgrade from versions prior to 1.2.
   * Upgrade to Spring Framework 3.2.1.RELEASE.
-  * Upgrade to Lucene Search 4.1.
+  * Upgrade to Lucene Search 4.3.
   * Upgrade to HSQLDB 2.2.9.
   * Upgrade to commons-io-2.4.
+  * Upgrade to commons-codec 1.8.
+  * Upgrade to commons-fileupload 1.3.
   * Upgrade to slf4j 1.7.2.
 
 Bugfixes:
@@ -32,6 +34,10 @@ Bugfixes:
 
   * Fix error that could cause categories to be initialized with the name
     "category_name" instead of the actual category name.
+  * HTML validation fixes (Thomas Koch).
+  * Move source repository from Subversion to Git (Thomas Koch and Peter
+    Palmreuther).
+  * Upgrade the Maven release plugin to 2.4.1.
 
 Translation Updates:
 

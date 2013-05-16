@@ -538,7 +538,7 @@ public class ServletUtil {
 		upload.setHeaderEncoding("UTF-8");
 		upload.setSizeMax(maxFileSize);
 		try {
-			return (List<FileItem>)upload.parseRequest(request);
+			return upload.parseRequest(request);
 		} catch (FileUploadException e) {
 			throw new WikiException(new WikiMessage("error.unknown", e.getMessage()), e);
 		}
