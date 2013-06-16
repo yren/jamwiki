@@ -17,9 +17,6 @@
 package org.jamwiki.db;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +60,7 @@ import org.jamwiki.utils.ResourceUtil;
 import org.jamwiki.utils.WikiCache;
 import org.jamwiki.utils.WikiLogger;
 import org.jamwiki.utils.WikiUtil;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
@@ -1533,22 +1531,11 @@ public class AnsiDataHandler {
 	public void setup(Locale locale, WikiUser user, String username, String encryptedPassword) throws WikiException {
 		WikiDatabase.initialize();
 		// determine if database exists
-		Connection conn = null;
-		Statement stmt = null;
 		try {
-			conn = DatabaseConnection.getConnection();
-			stmt = conn.createStatement();
-			stmt.executeQuery(this.queryHandler().existenceValidationQuery());
+			DatabaseConnection.getJdbcTemplate().execute(this.queryHandler().existenceValidationQuery());
 			return;
-		} catch (SQLException e) {
+		} catch (DataAccessException e) {
 			// database not yet set up
-		} finally {
-			DatabaseConnection.closeConnection(conn, stmt, null);
-			// explicitly null the variable to improve garbage collection.
-			// with very large loops this can help avoid OOM "GC overhead
-			// limit exceeded" errors.
-			stmt = null;
-			conn = null;
 		}
 		WikiDatabase.setup(locale, user, username, encryptedPassword);
 	}
