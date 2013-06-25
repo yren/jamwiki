@@ -7,6 +7,8 @@ New Features:
   * Refactor the database code to make greater use of Spring JDBC capabilities.
   * Remove deprecated TiddlyWiki importer.
   * Remove the ability to automatically upgrade from versions prior to 1.2.
+  * Move the section "edit" link next to the header text to avoid alignment
+    issues.
   * Upgrade to Spring Framework 3.2.1.RELEASE.
   * Upgrade to Lucene Search 4.3.
   * Upgrade to HSQLDB 2.2.9.

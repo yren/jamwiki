@@ -23,7 +23,7 @@ JAMWiki.UI.initializeTocToggle("hide", "show");
 </td>
 </tr>
 </table>
-<h2><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=1">Edit</a>]</span><span id="a_1">1</span></h2>
-<h2><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=2">Edit</a>]</span><span id="a_2">2</span></h2>
-<h2><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=3">Edit</a>]</span><span id="a_3">3</span></h2>
-<h2><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=4">Edit</a>]</span><span id="a_4">4</span></h2>
+<h2><span id="a_1">1</span><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=1">edit</a>]</span></h2>
+<h2><span id="a_2">2</span><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=2">edit</a>]</span></h2>
+<h2><span id="a_3">3</span><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=3">edit</a>]</span></h2>
+<h2><span id="a_4">4</span><span class="editsection">[<a href="/wiki/en/Special:Edit?topic=TableOfContents5&amp;section=4">edit</a>]</span></h2>

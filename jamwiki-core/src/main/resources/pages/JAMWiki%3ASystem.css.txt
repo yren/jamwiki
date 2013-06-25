@@ -495,10 +495,9 @@ span.section-link a {
 	overflow: hidden;
 }
 .editsection {
-	font-size: 67%;
-	float: right;
-	margin-left: 5px;
-	position: relative;
+	font-size: small;
+	margin-left: 1em;
+	display: inline-block;
 }
 #shared-image-message {
 	border: 1px solid red;

@@ -180,7 +180,7 @@ public class UpgradeUtil {
 	 */
 	private boolean upgradeStyleSheet(Locale locale, String ipAddress) {
 		WikiVersion oldVersion = new WikiVersion(Environment.getValue(Environment.PROP_BASE_WIKI_VERSION));
-		boolean upgradeRequired = (oldVersion.before(1, 3, 0));
+		boolean upgradeRequired = (oldVersion.before(2, 0, 0));
 		if (upgradeRequired && this.performUpgrade) {
 			try {
 				List<VirtualWiki> virtualWikis = WikiBase.getDataHandler().getVirtualWikiList();
