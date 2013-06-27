@@ -182,6 +182,26 @@ public abstract class Utilities {
 	}
 
 	/**
+	 * Convert a string to a value that is valid for use as a CSS class name.
+	 */
+	public static String escapeCss(String value) {
+		if (value == null) {
+			return value;
+		}
+		// replace invalid characters
+		String invalidCharacters = "\\!:\"#$%&'()*+,-./;<=>?@[]^`{|},~ \t";
+		// replacement string must be the same length as the list of replacement characters
+		String replacement = "__________________________________";
+		String result = StringUtils.replaceChars(value, invalidCharacters, replacement);
+		// make sure there are no instances of "__"
+		result = StringUtils.replace(result, "__", "_");
+		// class cannot begin or end with an underscore
+		result = StringUtils.removeEnd(result, "_");
+		result = StringUtils.removeStart(result, "_");
+		return result;
+	}
+
+	/**
 	 * Given a message key and locale return a locale-specific message.
 	 *
 	 * @param key The message key that corresponds to the formatted message

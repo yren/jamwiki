@@ -90,6 +90,57 @@ public class UtilitiesTest extends JAMWikiUnitTest {
 	 *
 	 */
 	@Test
+	public void testEscapeCss() throws Throwable {
+		String original = "ça va là?";
+		String expected = "ça_va_là";
+		String result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "page [name]";
+		expected = "page_name";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "page (name) page";
+		expected = "page_name_page";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "*page*name*";
+		expected = "page_name";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "page/child/grandchild";
+		expected = "page_child_grandchild";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "page.name";
+		expected = "page_name";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "page	name";
+		expected = "page_name";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = " ";
+		expected = "";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = " _page_ ";
+		expected = "page";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "Special:RecentChanges";
+		expected = "Special_RecentChanges";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+		original = "JAMWiki:System.css";
+		expected = "JAMWiki_System_css";
+		result = Utilities.escapeCss(original);
+		assertEquals("Failure during CSS escape", expected, result);
+	}
+
+	/**
+	 *
+	 */
+	@Test
 	public void testIsIpAddress() throws Throwable {
 		//test ipv4 addresses
 		assertTrue("0.0.0.0", Utilities.isIpAddress("0.0.0.0"));

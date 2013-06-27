@@ -57,6 +57,7 @@ public class WikiPageInfo {
 	private List<String> interwikiLinks = new ArrayList<String>();
 	/** A list of non-error messages generated during servlet processing to display on the front end. */
 	private List<WikiMessage> messages = new ArrayList<WikiMessage>();
+	private Namespace namespace = null;
 	private WikiMessage pageTitle = null;
 	private String redirectName = null;
 	private String redirectUrl = null;
@@ -94,6 +95,7 @@ public class WikiPageInfo {
 		this.errors = new ArrayList<WikiMessage>();
 		this.interwikiLinks = new ArrayList<String>();
 		this.messages = new ArrayList<WikiMessage>();
+		this.namespace = null;
 		this.pageTitle = null;
 		this.redirectName = null;
 		this.selectedTab = null;
@@ -530,6 +532,14 @@ public class WikiPageInfo {
 	}
 
 	/**
+	 * Return the topic name escaped to a form that is suitable for use as
+	 * a CSS class.
+	 */
+	public String getTopicNameAsCss() {
+		return Utilities.escapeCss(this.topicName);
+	}
+
+	/**
 	 * Return a link to edit the current topic, or <code>null</code> if there is
 	 * no current topic.
 	 *
@@ -548,6 +558,17 @@ public class WikiPageInfo {
 	 */
 	public void setTopicName(String topicName) {
 		this.topicName = topicName;
+	}
+
+	/**
+	 * Return the Namespace corresponding to the current topic.
+	 */
+	public Namespace getTopicNamespace() {
+		if (this.namespace == null) {
+			WikiLink wikiLink = new WikiLink(null, this.virtualWikiName, this.getTopicName());
+			this.namespace = wikiLink.getNamespace();
+		}
+		return this.namespace;
 	}
 
 	/**
@@ -632,7 +653,6 @@ public class WikiPageInfo {
 	 *  user page, otherwise <code>false</code>.
 	 */
 	public boolean isUserPage() {
-		WikiLink wikiLink = new WikiLink(null, this.virtualWikiName, this.getTopicName());
-		return (wikiLink.getNamespace().getId().equals(Namespace.USER_ID) || wikiLink.getNamespace().getId().equals(Namespace.USER_COMMENTS_ID));
+		return (this.getTopicNamespace().getId().equals(Namespace.USER_ID) || this.getTopicNamespace().getId().equals(Namespace.USER_COMMENTS_ID));
 	}
 }

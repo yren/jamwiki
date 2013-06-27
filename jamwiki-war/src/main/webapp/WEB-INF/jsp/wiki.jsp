@@ -28,7 +28,7 @@
 
 <%@ include file="head.jsp" %>
 
-<body>
+<body class="ns-${pageInfo.topicNamespace.id} page-${pageInfo.topicNameAsCss}">
 
 <div id="wiki-page">
 <c:if test="${!upgradeInProgress}">
