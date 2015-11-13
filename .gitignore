@@ -1,5 +1,15 @@
 addons/bliki-parser/target/
+addons/bliki-parser/.classpath
+addons/bliki-parser/.project
 addons/jamwiki-jflex-parser-tags/target/
+addons/jamwiki-jflex-parser-tags/.classpath
+addons/jamwiki-jflex-parser-tags/.project
 jamwiki-core/target/
+jamwiki-core/.classpath
+jamwiki-core/.project
 jamwiki-war/target/
+jamwiki-war/.classpath
+jamwiki-war/.project
 jamwiki-web/target/
+jamwiki-web/.classpath
+jamwiki-web/.project
