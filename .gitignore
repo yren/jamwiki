@@ -1,3 +1,4 @@
+addons/target/
 addons/bliki-parser/target/
 addons/bliki-parser/.classpath
 addons/bliki-parser/.project
@@ -13,3 +14,4 @@ jamwiki-war/.project
 jamwiki-web/target/
 jamwiki-web/.classpath
 jamwiki-web/.project
+target/
